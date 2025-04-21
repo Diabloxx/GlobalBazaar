@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee, stripe } from "./stripe";
 import { 
   insertUserSchema, 
@@ -8,7 +9,8 @@ import {
   insertOrderSchema,
   insertWishlistItemSchema,
   insertProductSchema,
-  insertProductReviewSchema
+  insertProductReviewSchema,
+  userActivity
 } from "@shared/schema";
 import { z } from "zod";
 import passport from "passport";
@@ -1750,6 +1752,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch session activity" });
     }
   });
+  
+  // Development mode only: Get all user activity (for testing)
+  if (process.env.NODE_ENV === 'development') {
+    app.get("/api/dev/all-activity", async (req, res) => {
+      try {
+        // For testing purposes only
+        const result = await db.select().from(userActivity).orderBy("createdAt", "desc").limit(100);
+        res.json(result);
+      } catch (error) {
+        console.error("Error fetching all activity:", error);
+        res.status(500).json({ message: "Failed to fetch activity data" });
+      }
+    });
+  }
   
   // Get user activity (only accessible to the user themselves or admins)
   app.get("/api/user-activity", isAuthenticated, async (req, res) => {
