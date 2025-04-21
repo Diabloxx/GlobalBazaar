@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Truck, RefreshCw, Shield, Headphones } from 'lucide-react';
 import { Product, Category } from '@shared/schema';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
 import FlashSaleCard from '@/components/FlashSaleCard';
 import FeatureCard from '@/components/FeatureCard';
+import { ProductCardSkeletonGrid } from '@/components/ProductCardSkeleton';
 
 const Home = () => {
   // State for flash sale countdown
@@ -18,17 +20,17 @@ const Home = () => {
   });
 
   // Fetch categories
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ['/api/categories'],
   });
 
   // Fetch featured products
-  const { data: featuredProducts = [] } = useQuery({
+  const { data: featuredProducts = [], isLoading: featuredProductsLoading } = useQuery({
     queryKey: ['/api/products/featured'],
   });
 
   // Fetch sale products for flash sale
-  const { data: saleProducts = [] } = useQuery({
+  const { data: saleProducts = [], isLoading: saleProductsLoading } = useQuery({
     queryKey: ['/api/products/sale'],
   });
 
@@ -118,9 +120,18 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <h2 className="font-bold text-2xl mb-6 text-center">Shop by Category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {categories.map((category: Category) => (
-              <CategoryCard key={category.id} category={category} />
-            ))}
+            {categoriesLoading ? (
+              Array(6).fill(0).map((_, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  <Skeleton className="h-16 w-16 rounded-full mb-2" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))
+            ) : (
+              categories.map((category: Category) => (
+                <CategoryCard key={category.id} category={category} />
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -145,9 +156,13 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {featuredProducts.map((product: Product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {featuredProductsLoading ? (
+              <ProductCardSkeletonGrid count={10} />
+            ) : (
+              featuredProducts.map((product: Product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
           </div>
           
           <div className="mt-8 text-center">
@@ -185,13 +200,25 @@ const Home = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full md:w-auto">
-                {flashSaleProducts.map((product: Product, index: number) => (
-                  <FlashSaleCard 
-                    key={product.id} 
-                    product={product} 
-                    claimedPercentage={claimedPercentages[index] || 50}
-                  />
-                ))}
+                {saleProductsLoading ? (
+                  Array(3).fill(0).map((_, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                      <Skeleton className="h-32 w-full" />
+                      <div className="p-3">
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        <Skeleton className="h-6 w-1/2" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  flashSaleProducts.map((product: Product, index: number) => (
+                    <FlashSaleCard 
+                      key={product.id} 
+                      product={product} 
+                      claimedPercentage={claimedPercentages[index] || 50}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -16,6 +16,8 @@ import Checkout from "@/pages/Checkout";
 import Account from "@/pages/Account";
 import Orders from "@/pages/Orders";
 import Wishlist from "@/pages/Wishlist";
+import AdminDashboard from "@/pages/AdminDashboard";
+import SellerDashboard from "@/pages/SellerDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
