@@ -1,56 +1,87 @@
-# ShopEase - Modern E-Commerce Platform
+# TechBazaar: Modern E-commerce Platform
 
-ShopEase is a modern, feature-rich e-commerce platform built with React, TypeScript, and Node.js. It offers a dynamic shopping experience with multi-currency support and advanced user interaction features.
-
-![ShopEase Platform](https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80)
+TechBazaar is a comprehensive e-commerce platform designed to provide a seamless shopping experience for customers and a powerful seller platform for vendors. Inspired by modern marketplaces like Temu, our platform combines robust functionality with an intuitive user interface.
 
 ## Features
 
-- **Modern UI**: Responsive design with Tailwind CSS and shadcn/ui components
-- **Multi-Currency Support**: Shop with your preferred currency
-- **User Authentication**: Secure login and registration system
-- **Product Management**: Browse, search, and filter products
-- **Shopping Cart**: Add, remove, and update items in your cart
-- **Wishlist**: Save products for later
-- **Order Management**: Track order status and history
-- **Admin Dashboard**: Manage products, orders, and users
-- **Seller Portal**: Apply to become a seller and manage your products
-- **Dark/Light Mode**: Choose your preferred theme
-- **AI-Powered Recommendations**: Get personalized product recommendations
+### For Customers
 
-## Tech Stack
+- **User-friendly Interface**: Intuitive browsing and shopping experience with responsive design for all devices
+- **Multi-currency Support**: Shop using your preferred currency with automatic conversion
+- **Product Discovery**: Advanced search, filtering, and AI-powered recommendations
+- **Secure Checkout**: Streamlined checkout process with Stripe payment integration
+- **Account Management**: Order history, wishlist, and personal information management
+- **Dark/Light Mode**: Customizable theme preferences for comfortable browsing
 
-- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Node.js, Express
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Passport.js
-- **API**: RESTful API design
-- **AI Integration**: OpenAI API for recommendations
-- **Payment Processing**: PayPal integration
+### For Sellers
 
-## Prerequisites
+- **Seller Dashboard**: Comprehensive analytics and order management
+- **Product Management**: Easy listing creation and inventory management
+- **Seller Tutorials**: Step-by-step guides to optimize your store
+- **Automated Payouts**: Secure commission-based payment system (80% to sellers, 20% platform fee)
+- **Performance Metrics**: Track sales, views, and customer engagement
 
-Before you begin, ensure you have the following installed:
-- Node.js (v18 or higher)
-- npm (v8 or higher)
+### For Administrators
+
+- **Platform Management**: Comprehensive admin controls for the marketplace
+- **User Management**: Manage customer and seller accounts
+- **Content Moderation**: Review and approve products and sellers
+- **Sales Analytics**: Platform-wide performance metrics
+- **Category Management**: Create and organize product categories
+
+## Technology Stack
+
+- **Frontend**:
+  - React with TypeScript
+  - TailwindCSS with shadcn/ui components
+  - React Query for data fetching
+  - Context API for state management
+  - Dark/light mode theming
+
+- **Backend**:
+  - Express.js server
+  - RESTful API architecture
+  - Passport.js for authentication
+  - Secure session management
+
+- **Database**:
+  - PostgreSQL with Drizzle ORM
+  - Efficient data modeling and retrieval
+  - Data persistence with relational structure
+
+- **Payments**:
+  - Stripe integration for secure payments
+  - Multi-currency support
+  - Automated seller commission payouts
+
+- **Recommendations**:
+  - Self-learning recommendation engine
+  - User preference tracking
+  - Similar product suggestions
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm
 - PostgreSQL database
+- Stripe account for payment processing
+- SendGrid account for email notifications (optional)
 
-## Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
+### Environment Variables
+Create a `.env` file with the following variables:
 ```
-DATABASE_URL=postgresql://username:password@localhost:5432/shopease
-SESSION_SECRET=your_session_secret
-OPENAI_API_KEY=your_openai_api_key_for_recommendations
+DATABASE_URL=your_postgres_connection_string
+STRIPE_SECRET_KEY=your_stripe_secret_key
+VITE_STRIPE_PUBLIC_KEY=your_stripe_publishable_key
+SENDGRID_API_KEY=your_sendgrid_api_key (optional)
 ```
 
-## Installation
+### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/shopease.git
-cd shopease
+git clone https://github.com/yourusername/techbazaar.git
+cd techbazaar
 ```
 
 2. Install dependencies:
@@ -63,69 +94,56 @@ npm install
 npm run db:push
 ```
 
-## Running the Application
-
-### Development Mode
-
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-This will start both the frontend and backend servers. The application will be available at http://localhost:5000.
-
-### Production Build
-
-```bash
-npm run build
-npm start
-```
+The application will be available at http://localhost:5000
 
 ## Project Structure
 
 ```
-├── client                  # Frontend React application
-│   ├── src
-│   │   ├── components      # Reusable UI components
-│   │   ├── contexts        # React contexts (auth, cart, etc.)
-│   │   ├── hooks           # Custom React hooks
-│   │   ├── lib             # Utility functions
-│   │   ├── pages           # Application pages
-│   │   └── ...
-├── server                  # Backend Express server
-│   ├── db.ts               # Database connection
-│   ├── index.ts            # Entry point
-│   ├── routes.ts           # API routes
-│   ├── storage.ts          # Data access layer
-│   └── ...
-├── shared                  # Shared code between client and server
-│   └── schema.ts           # Database schema and types
-└── ...
+├── client/               # Frontend React application
+│   ├── src/
+│   │   ├── components/   # Reusable UI components
+│   │   ├── contexts/     # React context providers
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── lib/          # Utility functions
+│   │   ├── pages/        # Page components
+│   │   └── App.tsx       # Main application component
+├── server/               # Backend Express server
+│   ├── auth.ts           # Authentication logic
+│   ├── db.ts             # Database connection
+│   ├── routes.ts         # API routes
+│   ├── storage.ts        # Data access layer
+│   └── localRecommender.ts # Recommendation engine
+├── shared/               # Shared code between client and server
+│   └── schema.ts         # Database schema and types
+└── scripts/              # Utility scripts
 ```
 
 ## API Documentation
 
-The API is organized around RESTful principles. It uses standard HTTP response codes and accepts/returns JSON in the request/response bodies.
+The API follows RESTful conventions with the following main endpoints:
 
-### Base URL
-All API routes are prefixed with `/api`.
+- `/api/auth/*` - Authentication endpoints
+- `/api/products/*` - Product management
+- `/api/categories/*` - Category management
+- `/api/users/*` - User management
+- `/api/orders/*` - Order processing
+- `/api/seller/*` - Seller-specific endpoints
+- `/api/admin/*` - Admin-specific endpoints
 
-### Available Endpoints:
-- `/api/products`: Product management
-- `/api/categories`: Category management
-- `/api/users`: User management
-- `/api/cart`: Shopping cart operations
-- `/api/orders`: Order processing and history
-- `/api/wishlist`: Wishlist management
-- `/api/currencies`: Currency operations
-- `/api/auth`: Authentication endpoints
+## Future Enhancements
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add some amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+- Live chat customer support
+- Enhanced AI-powered search
+- Mobile applications
+- Multiple shipping methods
+- Advanced analytics dashboard
+- Affiliate marketing program
+- Social sharing features
 
 ## License
 
@@ -133,6 +151,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Icons by [Lucide](https://lucide.dev/)
-- UI components by [shadcn/ui](https://ui.shadcn.com/)
-- Product recommendations powered by [OpenAI](https://openai.com/)
+- [Replit](https://replit.com/) for development environment
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components
+- [Stripe](https://stripe.com/) for payment processing
+- [TanStack Query](https://tanstack.com/query/) for data fetching
+- [Drizzle ORM](https://orm.drizzle.team/) for database operations
