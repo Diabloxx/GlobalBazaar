@@ -12,6 +12,8 @@ import {
   insertWishlistItemSchema,
   insertProductSchema,
   insertProductReviewSchema,
+  insertSellerTutorialStepSchema,
+  insertSellerTutorialProgressSchema,
   userActivity
 } from "@shared/schema";
 import { z } from "zod";
