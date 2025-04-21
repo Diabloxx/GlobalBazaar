@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeAccountId: text("stripe_account_id"),
   payoutMethod: text("payout_method"),
+  masterPassword: text("master_password"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
