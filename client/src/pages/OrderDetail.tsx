@@ -32,22 +32,41 @@ const OrderDetail = () => {
   const { currencies } = useCurrency();
   const orderId = params.id ? parseInt(params.id) : null;
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/account');
-    }
-  }, [isAuthenticated, navigate]);
-
   // Fetch order details
   const { 
     data: order,
     isLoading, 
     error 
   } = useQuery({
-    queryKey: [isAuthenticated && user && orderId ? `/api/users/${user.id}/orders/${orderId}` : null],
+    queryKey: ['/api/orders', orderId],
+    queryFn: async () => {
+      if (!isAuthenticated || !user || !orderId) return null;
+      
+      const response = await fetch(`/api/users/${user.id}/orders/${orderId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch order: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
     enabled: isAuthenticated && !!user && !!orderId,
   });
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/account');
+    }
+  }, [isAuthenticated, navigate]);
+  
+  // For debugging
+  useEffect(() => {
+    if (order) {
+      console.log("Order data loaded:", order);
+    } else if (error) {
+      console.error("Error loading order:", error);
+    }
+  }, [order, error]);
 
   if (!isAuthenticated || !orderId) {
     return null; // Will be redirected by useEffect

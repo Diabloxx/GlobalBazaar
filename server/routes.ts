@@ -490,14 +490,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get a specific order for a user
   app.get("/api/users/:userId/orders/:orderId", async (req, res) => {
     try {
+      console.log("Fetching order with params:", req.params);
+      
       const userId = parseInt(req.params.userId);
       const orderId = parseInt(req.params.orderId);
       
       if (isNaN(userId) || isNaN(orderId)) {
+        console.log("Invalid IDs - userId:", userId, "orderId:", orderId);
         return res.status(400).json({ message: "Invalid user ID or order ID" });
       }
       
+      console.log("Getting order:", orderId);
       const order = await storage.getOrder(orderId);
+      console.log("Order found:", order ? "yes" : "no", order);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -505,9 +510,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify that this order belongs to the requested user
       if (order.userId !== userId) {
+        console.log("Access denied - order.userId:", order.userId, "requested userId:", userId);
         return res.status(403).json({ message: "Access denied" });
       }
       
+      console.log("Sending order:", order);
       res.json(order);
     } catch (error) {
       console.error("Error fetching order:", error);

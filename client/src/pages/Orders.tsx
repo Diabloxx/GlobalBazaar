@@ -159,14 +159,12 @@ const Orders = () => {
                           {getStatusBadge(order.status)}
                           <Button 
                             variant="ghost" 
-                            size="sm" 
-                            asChild
+                            size="sm"
                             className="ml-2"
+                            onClick={() => navigate(`/orders/${order.id}`)}
                           >
-                            <a href={`/orders/${order.id}`} className="flex items-center">
-                              <span className="text-sm">Details</span>
-                              <ChevronRight className="h-4 w-4 ml-1" />
-                            </a>
+                            <span className="text-sm">Details</span>
+                            <ChevronRight className="h-4 w-4 ml-1" />
                           </Button>
                         </div>
                       </div>
