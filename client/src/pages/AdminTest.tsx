@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Database, UserCog, RefreshCw, LogIn } from 'lucide-react';
+import { Shield, Database, UserCog, RefreshCw, LogIn, User, Lock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminTest = () => {
   const { user, updateProfile, login } = useAuth();
+  const { toast } = useToast();
   const [serverUser, setServerUser] = useState<any>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginForm, setLoginForm] = useState({
+    username: '',
+    password: ''
+  });
 
   // Get user from server directly
   const fetchUserFromServer = async () => {
@@ -144,6 +152,39 @@ const AdminTest = () => {
     } catch (error) {
       console.error('Auto-login failed:', error);
       setDebugInfo(`Login error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+  
+  // Handle manual login
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLoginForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Manual login submission
+  const handleManualLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      await login(loginForm.username, loginForm.password);
+      setDebugInfo('Login successful');
+      // Store password for auto-login in the future
+      localStorage.setItem('_dev_password', loginForm.password);
+      fetchUserFromServer();
+    } catch (error) {
+      console.error('Login failed:', error);
+      setDebugInfo(`Login error: ${error instanceof Error ? error.message : String(error)}`);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Invalid credentials",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

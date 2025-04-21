@@ -360,7 +360,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Note: The set-admin endpoint is already defined above
+  // Fix: Commenting out duplicate set-admin endpoint. This was likely copied from another section.
+  /* 
+  // Set user role to admin (special endpoint for development/testing)
+  app.post("/api/users/:id/set-admin", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      console.log("Setting user to admin, current user:", user);
+      
+      // Update user role to admin
+      const updatedUser = await storage.updateUser(userId, { role: "admin" });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user role" });
+      }
+      
+      console.log("User after role update:", updatedUser);
+      
+      // Don't send back the password
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json({
+        message: "User role updated to admin successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Set admin error:", error);
+      res.status(500).json({ message: "Failed to set user as admin" });
+    }
+  });
+  */
   
   // Debug endpoint to get user by ID with role information
   app.get("/api/debug/user/:id", async (req, res) => {
