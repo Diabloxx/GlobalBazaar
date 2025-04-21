@@ -84,7 +84,7 @@ const About = () => {
       </div>
       
       <Tabs defaultValue={hash} className="space-y-8">
-        <div className="flex justify-center">
+        <div className="flex justify-center bg-gray-100 p-4 rounded-lg">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
             <TabsTrigger value="about">About ShopEase</TabsTrigger>
             <TabsTrigger value="careers">Careers</TabsTrigger>
