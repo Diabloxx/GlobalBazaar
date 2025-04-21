@@ -80,13 +80,13 @@ const About = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">About Us</h1>
-        <p className="text-gray-600 dark:text-gray-300 mt-2">Learn more about ShopEase, our mission, and our team</p>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">Learn more about TechBazaar, our mission, and our team</p>
       </div>
       
       <Tabs defaultValue={hash} className="space-y-8">
         <div className="flex justify-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
-            <TabsTrigger value="about">About ShopEase</TabsTrigger>
+            <TabsTrigger value="about">About TechBazaar</TabsTrigger>
             <TabsTrigger value="careers">Careers</TabsTrigger>
             <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
             <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
@@ -95,13 +95,13 @@ const About = () => {
           </TabsList>
         </div>
         
-        {/* About ShopEase */}
+        {/* About TechBazaar */}
         <TabsContent value="about">
           <div className="space-y-8">
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h1 className="text-4xl font-bold mb-4">Our Story</h1>
               <p className="text-gray-600 text-lg">
-                Founded in 2018, ShopEase was born from a simple idea: shopping should be easy, enjoyable, and accessible to everyone.
+                Founded in 2018, TechBazaar was born from a simple idea: shopping should be easy, enjoyable, and accessible to everyone.
               </p>
             </div>
             
@@ -109,7 +109,7 @@ const About = () => {
               <div>
                 <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
                 <p className="text-gray-600 mb-4">
-                  At ShopEase, our mission is to create a shopping platform that connects people with quality products at affordable prices, while providing an exceptional user experience from browsing to delivery.
+                  At TechBazaar, our mission is to create a shopping platform that connects people with quality products at affordable prices, while providing an exceptional user experience from browsing to delivery.
                 </p>
                 <p className="text-gray-600">
                   We believe that shopping online should be more than just convenient—it should be delightful. That's why we've built a platform that puts the customer experience first, with intuitive design, transparent policies, and responsive support.
@@ -118,7 +118,7 @@ const About = () => {
               <div className="rounded-lg overflow-hidden shadow-lg">
                 <img 
                   src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" 
-                  alt="ShopEase Team" 
+                  alt="TechBazaar Team" 
                   className="w-full h-auto"
                 />
               </div>
@@ -205,7 +205,7 @@ const About = () => {
               <div className="rounded-lg overflow-hidden shadow-lg">
                 <img 
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" 
-                  alt="ShopEase Office" 
+                  alt="TechBazaar Office" 
                   className="w-full h-auto"
                 />
               </div>
@@ -283,7 +283,7 @@ const About = () => {
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
-                At ShopEase, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase.
+                At TechBazaar, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase.
               </p>
               
               <h3>Information We Collect</h3>
@@ -340,7 +340,7 @@ const About = () => {
               
               <h3>Contact Us</h3>
               <p>
-                If you have any questions about this Privacy Policy, please contact us at privacy@shopease.com.
+                If you have any questions about this Privacy Policy, please contact us at privacy@techbazaar.com.
               </p>
             </CardContent>
           </Card>
@@ -357,7 +357,7 @@ const About = () => {
             </CardHeader>
             <CardContent className="prose prose-gray max-w-none">
               <p>
-                Welcome to ShopEase. Please read these Terms & Conditions carefully before using our website. By accessing or using our website, you agree to be bound by these Terms.
+                Welcome to TechBazaar. Please read these Terms & Conditions carefully before using our website. By accessing or using our website, you agree to be bound by these Terms.
               </p>
               
               <h3>Product Information</h3>
