@@ -233,6 +233,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Set user role to admin (special endpoint for development/testing)
+  app.post("/api/users/:id/set-admin", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update user role to admin
+      const updatedUser = await storage.updateUser(userId, { role: "admin" });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user role" });
+      }
+      
+      // Don't send back the password
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json({
+        message: "User role updated to admin successfully",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Set admin error:", error);
+      res.status(500).json({ message: "Failed to set user as admin" });
+    }
+  });
+  
   // Get cart items for a user
   app.get("/api/users/:id/cart", async (req, res) => {
     try {
@@ -503,6 +535,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(currencies);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch currencies" });
+    }
+  });
+  
+  // Admin API - Get all users
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      // Remove passwords before sending
+      const usersWithoutPasswords = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      console.error("Admin get users error:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
+  // Admin API - Get all orders
+  app.get("/api/admin/orders", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      // Get all orders
+      const orders = await storage.getAllOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Admin get orders error:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  // Admin API - Get all products
+  app.get("/api/admin/products", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      // Get all products (using the existing products endpoint)
+      const products = await storage.getProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Admin get products error:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
     }
   });
   

@@ -25,7 +25,8 @@ import {
   Search,
   LogIn,
   LogOut,
-  Store
+  Store,
+  Shield
 } from 'lucide-react';
 
 const Header = () => {
@@ -194,6 +195,18 @@ const Header = () => {
               Bestsellers
             </Link>
             
+            {/* Show admin dashboard for admin users */}
+            {user?.role === 'admin' && (
+              <Link href="/admin" className={location === '/admin' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
+                <div className="flex items-center">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  Admin Dashboard
+                </div>
+              </Link>
+            )}
+            
             {/* Show seller dashboard for sellers and admins */}
             {user?.role === 'seller' || user?.role === 'admin' ? (
               <Link href="/seller" className={location === '/seller' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
@@ -238,6 +251,16 @@ const Header = () => {
             <Link href="/sale" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">Sale</Link>
             <Link href="/new-arrivals" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">New Arrivals</Link>
             <Link href="/bestsellers" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">Bestsellers</Link>
+            
+            {/* Admin link for mobile */}
+            {user?.role === 'admin' && (
+              <Link href="/admin" className="block py-2 text-gray-700 dark:text-gray-200 font-medium flex items-center">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
+                  <Shield className="h-4 w-4 text-primary" />
+                </div>
+                Admin Dashboard
+              </Link>
+            )}
             
             {/* Seller links for mobile */}
             {user?.role === 'seller' || user?.role === 'admin' ? (
