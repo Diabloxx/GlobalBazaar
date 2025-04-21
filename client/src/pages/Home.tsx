@@ -72,14 +72,14 @@ const Home = () => {
   return (
     <>
       {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-8 md:py-12">
+      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-gray-800 dark:to-gray-700 py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 mb-8 md:mb-0">
-              <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl text-gray-800 mb-4">
+              <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl text-gray-800 dark:text-white mb-4">
                 Amazing Deals Every Day
               </h1>
-              <p className="text-gray-600 text-lg mb-6">
+              <p className="text-gray-600 dark:text-gray-300 text-lg mb-6">
                 Shop thousands of products at unbeatable prices with free shipping on orders over $50.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -116,9 +116,9 @@ const Home = () => {
       </section>
 
       {/* Categories */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
-          <h2 className="font-bold text-2xl mb-6 text-center">Shop by Category</h2>
+          <h2 className="font-bold text-2xl mb-6 text-center text-gray-800 dark:text-white">Shop by Category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {categoriesLoading ? (
               Array(6).fill(0).map((_, index) => (
@@ -137,17 +137,17 @@ const Home = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-8 bg-gray-50">
+      <section className="py-8 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="font-bold text-2xl">Featured Products</h2>
+            <h2 className="font-bold text-2xl text-gray-800 dark:text-white">Featured Products</h2>
             <div className="flex space-x-2">
-              <button className="p-2 rounded-full border border-gray-300 hover:border-primary text-gray-600 hover:text-primary">
+              <button className="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary bg-white dark:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <button className="p-2 rounded-full border border-gray-300 hover:border-primary text-gray-600 hover:text-primary">
+              <button className="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary bg-white dark:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -168,7 +168,7 @@ const Home = () => {
           <div className="mt-8 text-center">
             <Link 
               href="/products" 
-              className="inline-block border-2 border-primary text-primary hover:bg-primary hover:text-white font-medium px-6 py-2 rounded-full transition-colors"
+              className="inline-block border-2 border-primary text-primary dark:text-primary hover:bg-primary hover:text-white font-medium px-6 py-2 rounded-full transition-colors"
             >
               View All Products
             </Link>
@@ -177,7 +177,7 @@ const Home = () => {
       </section>
       
       {/* Flash Sale */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
@@ -226,7 +226,7 @@ const Home = () => {
       </section>
 
       {/* Features */}
-      <section className="py-8 bg-gray-50">
+      <section className="py-8 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard 
@@ -265,7 +265,7 @@ const Home = () => {
       </section>
 
       {/* App Download Banner */}
-      <section className="py-8 bg-white">
+      <section className="py-8 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="bg-gray-100 rounded-xl overflow-hidden">
             <div className="flex flex-col md:flex-row">
