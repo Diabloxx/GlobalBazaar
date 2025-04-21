@@ -192,7 +192,7 @@ class RecommendationEngine {
     // If no keywords, return bestsellers or featured products
     if (queryKeywords.length === 0) {
       const featuredIds = products
-        .filter(p => p.isFeatured)
+        .filter(p => p.featured === true)
         .map(p => p.id)
         .slice(0, limit);
       
@@ -247,10 +247,10 @@ class RecommendationEngine {
       }
       
       // Add bonus for featured and bestseller products
-      if (product.featured) score += 3;
-      if (product.isBestSeller) score += 5;
-      if (product.isNew) score += 2;
-      if (product.isSale) score += 1;
+      if (product.featured === true) score += 3;
+      if (product.isBestSeller === true) score += 5;
+      if (product.isNew === true) score += 2;
+      if (product.isSale === true) score += 1;
       
       return { id: product.id, score };
     });
@@ -265,6 +265,23 @@ class RecommendationEngine {
     
     // Cache the result
     this.queryCache.set(cacheKey, recommendedIds);
+    
+    // Log the recommendation details for debugging
+    console.log('===== RECOMMENDATION DETAILS =====');
+    console.log(`Query: "${query}"`);
+    console.log(`Category ID: ${categoryId || 'none'}`);
+    console.log(`User ID: ${userId || 'anonymous'}`);
+    console.log(`Query keywords: ${queryKeywords.join(', ')}`);
+    console.log(`Top scoring products:`);
+    
+    // Get product names for the top 5 results for logging
+    const topProducts = productScores.slice(0, 5);
+    topProducts.forEach((item, index) => {
+      const product = products.find(p => p.id === item.id);
+      console.log(`  ${index + 1}. ${product?.name} (ID: ${item.id}, Score: ${item.score.toFixed(2)})`);
+    });
+    
+    console.log('=================================');
     
     return {
       products: recommendedIds,
