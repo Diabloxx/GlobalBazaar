@@ -1765,7 +1765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const progress = await storage.markTutorialStepCompleted(userId, stepId, notes);
       
       // Record this activity
-      await storage.createUserActivity({
+      await storage.recordUserActivity({
         userId,
         sessionId: req.sessionID,
         activityType: "tutorial_step_completed",
