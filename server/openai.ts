@@ -21,6 +21,12 @@ export async function getProductRecommendations(
   try {
     const { query, userPreferences = [], priceRange, categoryId, browsedProducts = [] } = params;
     
+    // Check if OpenAI API key is available and valid
+    if (!process.env.OPENAI_API_KEY) {
+      console.log("No OpenAI API key found, using fallback recommendations");
+      return getFallbackRecommendations(query, availableProducts, categoryId);
+    }
+    
     // Format the context for the AI
     let context = `You are an AI shopping assistant for our e-commerce platform.`;
     
@@ -50,33 +56,40 @@ export async function getProductRecommendations(
       context += ` The user is interested in category ID: ${categoryId}.`;
     }
 
-    // Send prompt to OpenAI
-    const response = await openai.chat.completions.create({
-      model: DEFAULT_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: context,
-        },
-        {
-          role: "user",
-          content: query,
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
-
-    return {
-      message: response.choices[0].message.content,
-      recommendedProducts: getRecommendedProductIds(
-        response.choices[0].message.content || "",
-        availableProducts
-      )
-    };
+    try {
+      // Send prompt to OpenAI
+      const response = await openai.chat.completions.create({
+        model: DEFAULT_MODEL,
+        messages: [
+          {
+            role: "system",
+            content: context,
+          },
+          {
+            role: "user",
+            content: query,
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 400, // Limit token usage to avoid rate limits
+      });
+  
+      return {
+        message: response.choices[0].message.content,
+        recommendedProducts: getRecommendedProductIds(
+          response.choices[0].message.content || "",
+          availableProducts
+        )
+      };
+    } catch (openaiError) {
+      console.error("OpenAI API error:", openaiError);
+      // Use our fallback recommendation system if OpenAI API fails
+      return getFallbackRecommendations(query, availableProducts, categoryId);
+    }
   } catch (error) {
-    console.error("Error getting AI recommendations:", error);
-    throw new Error("Failed to get AI recommendations");
+    console.error("Error in recommendation process:", error);
+    // Return fallback recommendations instead of throwing error
+    return getFallbackRecommendations(query, availableProducts, categoryId);
   }
 }
 
@@ -105,8 +118,77 @@ function getRecommendedProductIds(aiResponse: string, availableProducts: any[]) 
   return recommendedProducts;
 }
 
+// Get fallback recommendations when OpenAI API is unavailable
+export function getFallbackRecommendations(
+  query: string,
+  availableProducts: any[],
+  categoryId?: number
+) {
+  console.log("Using fallback recommendations");
+  
+  // Extract keywords from query
+  const keywords = query.toLowerCase().split(/\s+/).filter(word => 
+    word.length > 3 && 
+    !['what', 'when', 'where', 'which', 'with', 'would', 'that', 'this', 'these', 'those', 'have', 'should', 'could', 'about'].includes(word)
+  );
+  
+  // Score products based on relevance to keywords and category
+  const scoredProducts = availableProducts.map(product => {
+    let score = 0;
+    
+    // Match by category
+    if (categoryId && product.categoryId === categoryId) {
+      score += 10;
+    }
+    
+    // Match by keywords in name
+    for (const keyword of keywords) {
+      if (product.name.toLowerCase().includes(keyword)) {
+        score += 5;
+      }
+      
+      // Match by keywords in description
+      if (product.description && product.description.toLowerCase().includes(keyword)) {
+        score += 3;
+      }
+    }
+    
+    // Bonus for featured products
+    if (product.isFeatured) {
+      score += 2;
+    }
+    
+    // Bonus for products on sale
+    if (product.isSale) {
+      score += 1;
+    }
+    
+    return {
+      id: product.id,
+      score
+    };
+  });
+  
+  // Sort by score (descending) and take top 5
+  const recommendedIds = scoredProducts
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(item => item.id);
+  
+  return {
+    message: `Here are some products that might match your search for "${query}"`,
+    recommendedProducts: recommendedIds
+  };
+}
+
 // Function to analyze user message and return shopping interests
 export async function analyzeUserInterests(userMessage: string) {
+  // Check if OpenAI API key is available and valid
+  if (!process.env.OPENAI_API_KEY) {
+    console.log("No OpenAI API key found, using basic interest extraction");
+    return getBasicInterests(userMessage);
+  }
+  
   try {
     const response = await openai.chat.completions.create({
       model: DEFAULT_MODEL,
@@ -122,6 +204,7 @@ export async function analyzeUserInterests(userMessage: string) {
       ],
       response_format: { type: "json_object" },
       temperature: 0.3,
+      max_tokens: 300, // Limit token usage
     });
 
     const content = response.choices[0].message.content;
@@ -132,6 +215,55 @@ export async function analyzeUserInterests(userMessage: string) {
     return JSON.parse(content);
   } catch (error) {
     console.error("Error analyzing user interests:", error);
-    return { interests: [], priceRange: null, categories: [] };
+    // Return basic interests extracted from text when OpenAI fails
+    return getBasicInterests(userMessage);
   }
+}
+
+// Basic interest extraction when OpenAI is unavailable
+function getBasicInterests(userMessage: string) {
+  // Extract potential interests from the message (basic NLP)
+  const message = userMessage.toLowerCase();
+  const interests = [];
+  
+  // Extract categories
+  const categories = [];
+  const categoryKeywords = {
+    'electronics': ['electronics', 'tech', 'gadget', 'phone', 'laptop', 'computer', 'smart', 'device'],
+    'clothing': ['clothing', 'fashion', 'wear', 'dress', 'shirt', 'pants', 'shoes', 'jacket', 'apparel'],
+    'home': ['home', 'furniture', 'decor', 'kitchen', 'bedroom', 'bathroom', 'living', 'decoration'],
+    'health': ['health', 'fitness', 'workout', 'exercise', 'vitamin', 'supplement', 'wellness'],
+    'beauty': ['beauty', 'cosmetic', 'makeup', 'skincare', 'haircare', 'perfume', 'fragrance']
+  };
+  
+  // Look for category matches
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    for (const keyword of keywords) {
+      if (message.includes(keyword)) {
+        categories.push(category);
+        interests.push(keyword);
+        break;
+      }
+    }
+  }
+  
+  // Extract price range
+  let priceRange = null;
+  const priceMatches = message.match(/(\$|usd|dollar)?\s?(\d+)(\s?(to|-)\s?(\$|usd|dollar)?\s?(\d+))?/i);
+  if (priceMatches && priceMatches[2]) {
+    const min = parseInt(priceMatches[2], 10);
+    let max = min * 2; // Default max if only one price mentioned
+    
+    if (priceMatches[6]) {
+      max = parseInt(priceMatches[6], 10);
+    }
+    
+    priceRange = { min, max };
+  }
+  
+  return {
+    interests: [...new Set(interests)],
+    priceRange,
+    categories: [...new Set(categories)]
+  };
 }

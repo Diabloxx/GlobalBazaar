@@ -1,116 +1,159 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, Search, Sparkles, Info, ShoppingCart } from 'lucide-react';
-import { Product } from '@shared/schema';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { useCart } from '@/contexts/CartContext';
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search, Sparkles, Info } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import ProductCard from "../ProductCard";
+import { Product } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface AIRecommendationWidgetProps {
   recentlyViewedProducts?: number[];
-  userPreferences?: string[];
   categoryId?: number;
 }
 
 export default function AIRecommendationWidget({ 
-  recentlyViewedProducts, 
-  userPreferences,
-  categoryId
+  recentlyViewedProducts = [],
+  categoryId 
 }: AIRecommendationWidgetProps) {
-  const [query, setQuery] = useState<string>('');
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [aiMessage, setAiMessage] = useState<string>('');
-  const [expanded, setExpanded] = useState<boolean>(false);
   const { toast } = useToast();
-  const { formatPrice } = useCurrency();
-  const { addToCart } = useCart();
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [hasPerformedSearch, setHasPerformedSearch] = useState(false);
 
-  // AI recommendation mutation
-  const recommendationMutation = useMutation({
-    mutationFn: async (searchQuery: string) => {
-      const response = await apiRequest('POST', '/api/ai/recommend', {
-        query: searchQuery,
-        userPreferences,
+  const getRecommendations = async () => {
+    if (!query.trim()) {
+      toast({
+        title: "Please enter a search query",
+        description: "Tell us what you're looking for to get personalized recommendations.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setHasPerformedSearch(true);
+
+    try {
+      const response = await apiRequest("POST", "/api/ai/recommend", {
+        query,
         browsedProducts: recentlyViewedProducts,
         categoryId
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
       const data = await response.json();
-      return data;
-    },
-    onSuccess: (data) => {
-      setSearchResults(data.products || []);
-      setAiMessage(data.message || 'Here are some recommendations based on your search');
-      setExpanded(true);
-    },
-    onError: (error: Error) => {
+      setRecommendations(data.products || []);
+      setMessage(data.message || "Here are some products you might like");
+    } catch (error) {
+      console.error("Error getting recommendations:", error);
       toast({
-        title: 'Recommendation failed',
-        description: error.message || 'Could not get recommendations at this time',
-        variant: 'destructive',
+        title: "Recommendation Error",
+        description: "We couldn't get personalized recommendations at this moment. Please try again later.",
+        variant: "destructive"
       });
-    },
-  });
+      setRecommendations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    
-    recommendationMutation.mutate(query);
+    getRecommendations();
   };
 
-  const handleAddToCart = (product: Product) => {
-    addToCart(product);
-    toast({
-      title: 'Added to cart',
-      description: `${product.name} has been added to your cart`,
-    });
-  };
+  // If widget hasn't been used yet, show minimal form
+  if (!hasPerformedSearch) {
+    return (
+      <Card className="mb-8 shadow-md">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-xl flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-primary" /> AI Shopping Assistant
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="ml-2 h-6 w-6">
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">Ask for product recommendations in natural language. Try something like "I need a gift for my mother who loves cooking"</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
+          </div>
+          <CardDescription>Get personalized product recommendations</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              placeholder="What are you looking for today?"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4 mr-2" />
+              )}
+              Find
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="w-full mb-6 shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">AI Shopping Assistant</CardTitle>
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>Ask me anything about products! I can recommend items based on your preferences, browsing history, and specific needs.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <Card className="mb-8 shadow-md">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl flex items-center">
+            <Sparkles className="h-5 w-5 mr-2 text-primary" /> AI Shopping Assistant
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2 h-6 w-6">
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Ask for product recommendations in natural language. Try something like "I need a gift for my mother who loves cooking"</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardTitle>
         </div>
-        <CardDescription>
-          Describe what you're looking for and get personalized recommendations
-        </CardDescription>
+        <CardDescription>Get personalized product recommendations</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex space-x-2 mb-4">
+        <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
           <Input
-            placeholder="e.g., 'I need a gift for a tech enthusiast under $100'"
+            placeholder="What are you looking for today?"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1"
           />
-          <Button 
-            type="submit" 
-            disabled={recommendationMutation.isPending || !query.trim()}
-          >
-            {recommendationMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Search className="h-4 w-4 mr-2" />
             )}
@@ -118,93 +161,37 @@ export default function AIRecommendationWidget({
           </Button>
         </form>
 
-        {/* Results section, shown when expanded */}
-        {expanded && (
-          <div className="pt-2 border-t">
-            {aiMessage && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-md text-sm">
-                <p>{aiMessage}</p>
-              </div>
-            )}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            {message && <div className="text-sm mb-4 bg-muted/50 p-3 rounded-md">{message}</div>}
             
-            {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {searchResults.map((product) => (
-                  <div key={product.id} className="group relative">
-                    <div className="rounded overflow-hidden shadow-md transition-shadow hover:shadow-lg">
-                      <div className="h-40 bg-gray-100 relative">
-                        {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                            <span className="text-gray-400">No image</span>
-                          </div>
-                        )}
-                        {product.isSale && (
-                          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                            SALE
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
-                        <div className="mt-1 flex justify-between items-center">
-                          <div className="flex items-center gap-1">
-                            {product.salePrice ? (
-                              <>
-                                <span className="font-bold text-red-500">{formatPrice(product.salePrice)}</span>
-                                <span className="text-xs line-through text-gray-400">{formatPrice(product.price)}</span>
-                              </>
-                            ) : (
-                              <span className="font-bold">{formatPrice(product.price)}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="secondary" 
-                              size="sm"
-                              onClick={() => handleAddToCart(product)}
-                            >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              Add to Cart
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <p>Add {product.name} to your shopping cart</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
+            {recommendations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {recommendations.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            ) : aiMessage ? (
-              <p className="text-center py-4 text-muted-foreground">No matching products found</p>
-            ) : null}
-          </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No recommendations found. Try a different search term.</p>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
-      <CardFooter className="pt-0 justify-between text-xs text-muted-foreground">
-        <div>Powered by AI</div>
-        {expanded && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setExpanded(false)}
-          >
-            Collapse
+      <CardFooter className="flex justify-between text-xs text-muted-foreground border-t pt-4">
+        <div>
+          Powered by AI technology
+        </div>
+        <div>
+          <Button variant="ghost" size="sm" onClick={() => setHasPerformedSearch(false)}>
+            Clear Results
           </Button>
-        )}
+        </div>
       </CardFooter>
     </Card>
   );

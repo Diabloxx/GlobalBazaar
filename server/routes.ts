@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee, stripe } from "./stripe";
-import { getProductRecommendations, analyzeUserInterests } from "./openai";
+import { getProductRecommendations, analyzeUserInterests, getFallbackRecommendations } from "./openai";
 import { 
   insertUserSchema, 
   insertCartItemSchema,
@@ -2008,17 +2008,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all products for AI to analyze
       const allProducts = await storage.getProducts();
       
-      // Get AI recommendations
-      const aiResponse = await getProductRecommendations(
-        {
-          query,
-          userPreferences,
-          browsedProducts: productIds,
-          categoryId,
-          priceRange
-        },
-        allProducts
-      );
+      let aiResponse;
+      try {
+        // Try to get AI recommendations
+        aiResponse = await getProductRecommendations(
+          {
+            query,
+            userPreferences,
+            browsedProducts: productIds,
+            categoryId,
+            priceRange
+          },
+          allProducts
+        );
+      } catch (aiError) {
+        // If AI fails, use our fallback recommendation system
+        console.error("Error getting AI recommendations:", aiError);
+        console.log("Using fallback recommendation system");
+        aiResponse = getFallbackRecommendations(query, allProducts, categoryId);
+      }
       
       // Get the actual product objects for the recommended IDs
       const recommendedProducts = [];
@@ -2027,6 +2035,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (product) {
           recommendedProducts.push(product);
         }
+      }
+      
+      // If we still don't have recommendations, get bestsellers as a final fallback
+      if (recommendedProducts.length === 0) {
+        const bestsellers = await storage.getBestsellerProducts();
+        recommendedProducts.push(...bestsellers.slice(0, 4));
+        aiResponse.message = `Here are some of our best products you might be interested in`;
       }
       
       // Record this as a user activity
@@ -2048,10 +2063,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("AI recommendation error:", error);
-      res.status(500).json({ 
-        message: "Failed to get AI recommendations",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      // Even if the whole endpoint fails, return at least bestsellers
+      try {
+        const bestsellers = await storage.getBestsellerProducts();
+        res.json({
+          products: bestsellers.slice(0, 4),
+          message: "Here are some popular products you might like"
+        });
+      } catch (fallbackError) {
+        res.status(500).json({ 
+          message: "Failed to get recommendations",
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
     }
   });
 
