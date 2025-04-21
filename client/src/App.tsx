@@ -24,6 +24,7 @@ import About from "@/pages/About";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
+import { AssistantBubble } from "@/components/AssistantBubble";
 
 function Router() {
   return (
@@ -63,6 +64,7 @@ function App() {
                   </main>
                   <Footer />
                   <CartSidebar />
+                  <AssistantBubble />
                   <Toaster />
                 </div>
               </CartProvider>

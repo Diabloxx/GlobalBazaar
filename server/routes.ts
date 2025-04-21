@@ -734,6 +734,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // AI-powered product recommendation
+  app.post("/api/ai/recommend", async (req, res) => {
+    try {
+      const { query, userPreferences, priceRange, categoryId, browsedProducts } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      // Get all products to match against
+      const allProducts = await storage.getProducts();
+      
+      // Import dynamically to avoid loading OpenAI if not needed
+      const { getProductRecommendations, analyzeUserInterests } = await import("./openai");
+      
+      // First, analyze the user's message to understand their interests
+      const analysis = await analyzeUserInterests(query);
+      
+      // Then get recommendations based on the analysis
+      const recommendations = await getProductRecommendations(
+        {
+          query,
+          userPreferences: userPreferences || analysis.interests || [],
+          priceRange: priceRange || analysis.priceRange,
+          categoryId,
+          browsedProducts
+        },
+        allProducts
+      );
+      
+      // Get the actual product objects for recommended product IDs
+      const recommendedProducts = recommendations.recommendedProducts
+        .map(id => allProducts.find(p => p.id === id))
+        .filter(Boolean);
+      
+      res.json({
+        message: recommendations.message,
+        products: recommendedProducts
+      });
+    } catch (error) {
+      console.error("AI recommendation error:", error);
+      res.status(500).json({ 
+        message: "Failed to get AI recommendations",
+        error: error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
