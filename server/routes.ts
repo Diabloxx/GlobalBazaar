@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee, stripe } from "./stripe";
+import { getProductRecommendations, analyzeUserInterests } from "./openai";
 import { 
   insertUserSchema, 
   insertCartItemSchema,
