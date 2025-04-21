@@ -5,7 +5,8 @@ import {
   cartItems, type CartItem, type InsertCartItem,
   orders, type Order, type InsertOrder,
   wishlistItems, type WishlistItem, type InsertWishlistItem,
-  Currency, currencySchema
+  Currency, currencySchema,
+  productReviews, type ProductReview, type InsertProductReview
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, like, and, or, desc, inArray, ne } from "drizzle-orm";
@@ -67,6 +68,16 @@ export interface IStorage {
   
   // Currency operations
   getCurrencies(): Promise<Currency[]>;
+  
+  // Product Review operations
+  getProductReviews(productId: number): Promise<ProductReview[]>;
+  getProductReviewsWithUser(productId: number): Promise<(ProductReview & { user: Pick<User, 'id' | 'username' | 'fullName'> })[]>;
+  getProductReview(id: number): Promise<ProductReview | undefined>;
+  getUserProductReview(userId: number, productId: number): Promise<ProductReview | undefined>;
+  createProductReview(review: InsertProductReview): Promise<ProductReview>;
+  updateProductReview(id: number, reviewData: Partial<InsertProductReview>): Promise<ProductReview | undefined>;
+  deleteProductReview(id: number): Promise<boolean>;
+  getProductAverageRating(productId: number): Promise<number>;
 }
 
 // In-memory storage implementation

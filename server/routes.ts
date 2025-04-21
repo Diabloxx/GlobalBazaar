@@ -6,7 +6,8 @@ import {
   insertCartItemSchema,
   insertOrderSchema,
   insertWishlistItemSchema,
-  insertProductSchema
+  insertProductSchema,
+  insertProductReviewSchema
 } from "@shared/schema";
 import { z } from "zod";
 import passport from "passport";
