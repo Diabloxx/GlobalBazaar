@@ -341,3 +341,65 @@ export const currencySchema = z.object({
 });
 
 export type Currency = z.infer<typeof currencySchema>;
+
+// Seller Tutorial tables
+export const sellerTutorialSteps = pgTable("seller_tutorial_steps", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  order: integer("order").notNull(),
+  isRequired: boolean("is_required").default(true),
+  estimatedTime: text("estimated_time"),
+  videoUrl: text("video_url"),
+  imageUrl: text("image_url"),
+  category: text("category").default("general"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSellerTutorialStepSchema = createInsertSchema(sellerTutorialSteps).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSellerTutorialStep = z.infer<typeof insertSellerTutorialStepSchema>;
+export type SellerTutorialStep = typeof sellerTutorialSteps.$inferSelect;
+
+// User progress for tutorial steps
+export const sellerTutorialProgress = pgTable("seller_tutorial_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stepId: integer("step_id").notNull().references(() => sellerTutorialSteps.id, { onDelete: "cascade" }),
+  isCompleted: boolean("is_completed").default(false),
+  completedAt: timestamp("completed_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSellerTutorialProgressSchema = createInsertSchema(sellerTutorialProgress).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSellerTutorialProgress = z.infer<typeof insertSellerTutorialProgressSchema>;
+export type SellerTutorialProgress = typeof sellerTutorialProgress.$inferSelect;
+
+// Tutorial step relationships
+export const sellerTutorialStepsRelations = relations(sellerTutorialSteps, ({ many }) => ({
+  progress: many(sellerTutorialProgress),
+}));
+
+export const sellerTutorialProgressRelations = relations(sellerTutorialProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [sellerTutorialProgress.userId],
+    references: [users.id],
+  }),
+  step: one(sellerTutorialSteps, {
+    fields: [sellerTutorialProgress.stepId],
+    references: [sellerTutorialSteps.id],
+  }),
+}));
+
+// Update User relations to include tutorial progress
+export const usersRelationsWithTutorial = relations(users, ({ many }) => ({
+  tutorialProgress: many(sellerTutorialProgress),
+}));
