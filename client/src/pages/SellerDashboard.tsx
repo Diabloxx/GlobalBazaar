@@ -160,17 +160,29 @@ const SellerDashboard = () => {
   const { data: sellerProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ['/api/seller/products'],
     enabled: isAuthenticated && (user?.role === 'seller' || user?.role === 'admin'),
+    select: (data) => {
+      // This ensures we're processing the response data correctly
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Fetch orders for seller view
   const { data: sellerOrders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/seller/orders'],
     enabled: isAuthenticated && (user?.role === 'seller' || user?.role === 'admin'),
+    select: (data) => {
+      // This ensures we're processing the response data correctly
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Fetch categories for product form
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
+    select: (data) => {
+      // Ensure we process the response data correctly
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Add product mutation
