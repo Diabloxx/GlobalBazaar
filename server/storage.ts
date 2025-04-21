@@ -9,7 +9,7 @@ import {
   productReviews, type ProductReview, type InsertProductReview
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, and, or, desc, inArray, ne } from "drizzle-orm";
+import { eq, like, and, or, desc, inArray, ne, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -88,6 +88,7 @@ export class MemStorage implements IStorage {
   private cartItems: Map<number, CartItem>;
   private orders: Map<number, Order>;
   private wishlistItems: Map<number, WishlistItem>;
+  private productReviews: Map<number, ProductReview>;
   private currencies: Currency[];
   
   private userIdCounter: number;
@@ -96,6 +97,7 @@ export class MemStorage implements IStorage {
   private cartItemIdCounter: number;
   private orderIdCounter: number;
   private wishlistItemIdCounter: number;
+  private productReviewIdCounter: number;
   
   constructor() {
     this.users = new Map();
@@ -104,6 +106,7 @@ export class MemStorage implements IStorage {
     this.cartItems = new Map();
     this.orders = new Map();
     this.wishlistItems = new Map();
+    this.productReviews = new Map();
     
     this.userIdCounter = 1;
     this.categoryIdCounter = 1;
@@ -111,6 +114,7 @@ export class MemStorage implements IStorage {
     this.cartItemIdCounter = 1;
     this.orderIdCounter = 1;
     this.wishlistItemIdCounter = 1;
+    this.productReviewIdCounter = 1;
     
     // Add some default currencies
     this.currencies = [
@@ -573,6 +577,107 @@ export class MemStorage implements IStorage {
   async getCurrencies(): Promise<Currency[]> {
     return this.currencies;
   }
+  
+  // Product Review operations
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    return Array.from(this.productReviews.values())
+      .filter(review => review.productId === productId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getProductReviewsWithUser(productId: number): Promise<(ProductReview & { user: Pick<User, 'id' | 'username' | 'fullName'> })[]> {
+    const reviews = await this.getProductReviews(productId);
+    return reviews.map(review => {
+      const user = this.users.get(review.userId);
+      if (!user) {
+        throw new Error(`User not found for review: ${review.id}`);
+      }
+      return {
+        ...review,
+        user: {
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName
+        }
+      };
+    });
+  }
+
+  async getProductReview(id: number): Promise<ProductReview | undefined> {
+    return this.productReviews.get(id);
+  }
+
+  async getUserProductReview(userId: number, productId: number): Promise<ProductReview | undefined> {
+    return Array.from(this.productReviews.values()).find(
+      review => review.userId === userId && review.productId === productId
+    );
+  }
+
+  async createProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const id = this.productReviewIdCounter++;
+    const newReview: ProductReview = { ...review, id, createdAt: new Date() };
+    this.productReviews.set(id, newReview);
+    
+    // Update the product's average rating
+    await this.updateProductRating(review.productId);
+    
+    return newReview;
+  }
+
+  async updateProductReview(id: number, reviewData: Partial<InsertProductReview>): Promise<ProductReview | undefined> {
+    const review = this.productReviews.get(id);
+    if (!review) return undefined;
+    
+    const updatedReview = { ...review, ...reviewData };
+    this.productReviews.set(id, updatedReview);
+    
+    // Update the product's average rating
+    await this.updateProductRating(review.productId);
+    
+    return updatedReview;
+  }
+
+  async deleteProductReview(id: number): Promise<boolean> {
+    const review = this.productReviews.get(id);
+    if (!review) return false;
+    
+    const productId = review.productId;
+    const result = this.productReviews.delete(id);
+    
+    // Update the product's average rating
+    if (result) {
+      await this.updateProductRating(productId);
+    }
+    
+    return result;
+  }
+
+  async getProductAverageRating(productId: number): Promise<number> {
+    const reviews = await this.getProductReviews(productId);
+    if (reviews.length === 0) return 0;
+    
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return totalRating / reviews.length;
+  }
+  
+  private async updateProductRating(productId: number): Promise<void> {
+    const product = this.products.get(productId);
+    if (!product) return;
+    
+    const reviews = await this.getProductReviews(productId);
+    const reviewCount = reviews.length;
+    
+    if (reviewCount === 0) {
+      // No reviews, set defaults
+      this.products.set(productId, { ...product, rating: 0, reviewCount: 0 });
+      return;
+    }
+    
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRating / reviewCount;
+    
+    this.products.set(productId, { ...product, rating: averageRating, reviewCount });
+  }
 }
 
 // Database storage implementation
@@ -980,6 +1085,109 @@ export class DatabaseStorage implements IStorage {
       { code: "CNY", name: "Chinese Yuan", symbol: "¥", rate: 7.24 },
       { code: "INR", name: "Indian Rupee", symbol: "₹", rate: 83.42 },
     ];
+  }
+  
+  // Product Review operations
+  async getProductReviews(productId: number): Promise<ProductReview[]> {
+    return db.select().from(productReviews).where(eq(productReviews.productId, productId)).orderBy(desc(productReviews.createdAt));
+  }
+
+  async getProductReviewsWithUser(productId: number): Promise<(ProductReview & { user: Pick<User, 'id' | 'username' | 'fullName'> })[]> {
+    const result = await db.query.productReviews.findMany({
+      where: eq(productReviews.productId, productId),
+      orderBy: desc(productReviews.createdAt),
+      with: {
+        user: {
+          columns: {
+            id: true,
+            username: true,
+            fullName: true
+          }
+        }
+      }
+    });
+    return result;
+  }
+
+  async getProductReview(id: number): Promise<ProductReview | undefined> {
+    const [review] = await db.select().from(productReviews).where(eq(productReviews.id, id));
+    return review || undefined;
+  }
+
+  async getUserProductReview(userId: number, productId: number): Promise<ProductReview | undefined> {
+    const [review] = await db.select().from(productReviews).where(
+      and(
+        eq(productReviews.userId, userId),
+        eq(productReviews.productId, productId)
+      )
+    );
+    return review || undefined;
+  }
+
+  async createProductReview(review: InsertProductReview): Promise<ProductReview> {
+    const [newReview] = await db.insert(productReviews).values(review).returning();
+    
+    // Update the product's average rating
+    await this.updateProductRating(review.productId);
+    
+    return newReview;
+  }
+
+  async updateProductReview(id: number, reviewData: Partial<InsertProductReview>): Promise<ProductReview | undefined> {
+    const [updatedReview] = await db.update(productReviews)
+      .set(reviewData)
+      .where(eq(productReviews.id, id))
+      .returning();
+    
+    if (updatedReview) {
+      // Update the product's average rating
+      await this.updateProductRating(updatedReview.productId);
+    }
+    
+    return updatedReview || undefined;
+  }
+
+  async deleteProductReview(id: number): Promise<boolean> {
+    const [deletedReview] = await db.delete(productReviews)
+      .where(eq(productReviews.id, id))
+      .returning({ productId: productReviews.productId });
+    
+    if (deletedReview) {
+      // Update the product's average rating
+      await this.updateProductRating(deletedReview.productId);
+      return true;
+    }
+    
+    return false;
+  }
+
+  async getProductAverageRating(productId: number): Promise<number> {
+    const result = await db.select({
+      averageRating: sql`AVG(${productReviews.rating})`,
+      count: sql`COUNT(*)`,
+    }).from(productReviews).where(eq(productReviews.productId, productId));
+    
+    const average = result[0]?.averageRating as number | null;
+    return average || 0;
+  }
+
+  private async updateProductRating(productId: number): Promise<void> {
+    const avgRatingResult = await db.select({
+      averageRating: sql`AVG(${productReviews.rating})`,
+      count: sql`COUNT(*)`,
+    }).from(productReviews).where(eq(productReviews.productId, productId));
+    
+    const average = avgRatingResult[0]?.averageRating as number | null;
+    const count = avgRatingResult[0]?.count as number | null;
+    
+    if (average !== null && count !== null) {
+      await db.update(products)
+        .set({ 
+          rating: average,
+          reviewCount: count
+        })
+        .where(eq(products.id, productId));
+    }
   }
 }
 
