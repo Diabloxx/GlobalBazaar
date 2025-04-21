@@ -93,10 +93,13 @@ const productFormSchema = z.object({
   imageUrl: z.string().url({
     message: "Please enter a valid URL for the image.",
   }),
+  // Match property names exactly with database schema
   isNew: z.boolean().default(false),
-  isFeatured: z.boolean().default(false),
+  featured: z.boolean().default(false), // was isFeatured
   isSale: z.boolean().default(false),
-  isBestseller: z.boolean().default(false),
+  isBestSeller: z.boolean().default(false), // was isBestseller
+  // Include slug field for completeness
+  slug: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -130,9 +133,10 @@ const SellerDashboard = () => {
       categoryId: 1,
       imageUrl: '',
       isNew: false,
-      isFeatured: false,
+      featured: false, // was isFeatured 
       isSale: false,
-      isBestseller: false,
+      isBestSeller: false, // was isBestseller
+      slug: '',
     },
   });
 
@@ -148,9 +152,10 @@ const SellerDashboard = () => {
         categoryId: editingProduct.categoryId,
         imageUrl: editingProduct.imageUrl,
         isNew: editingProduct.isNew || false,
-        isFeatured: editingProduct.isFeatured || false,
+        featured: editingProduct.featured || false, // updated from isFeatured
         isSale: editingProduct.isSale || false,
-        isBestseller: editingProduct.isBestSeller || false,
+        isBestSeller: editingProduct.isBestSeller || false, // updated from isBestseller
+        slug: editingProduct.slug || ''
       });
       setIsAddProductOpen(true);
     }
@@ -189,8 +194,34 @@ const SellerDashboard = () => {
   const addProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
       try {
-        const res = await apiRequest('POST', '/api/seller/products', data);
-        const jsonData = await res.json();
+        // Log the data being sent to the server
+        console.log("Submitting product data:", data);
+        
+        // Add missing fields that might be required by the schema
+        const completeData = {
+          ...data,
+          // Set default slug if not provided
+          slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        };
+        
+        console.log("Complete product data:", completeData);
+        
+        const res = await apiRequest('POST', '/api/seller/products', completeData);
+        console.log("Server response status:", res.status);
+        
+        // Get the response text
+        const responseText = await res.text();
+        console.log("Raw response:", responseText);
+        
+        // Try to parse as JSON if possible
+        let jsonData;
+        try {
+          jsonData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          throw new Error(`Failed to parse server response: ${responseText}`);
+        }
+        
         return jsonData;
       } catch (error) {
         console.error("Error adding product:", error);
@@ -219,9 +250,36 @@ const SellerDashboard = () => {
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues & { id: number }) => {
       try {
+        // Log the data being sent to the server
+        console.log("Updating product data:", data);
+        
         const { id, ...rest } = data;
-        const res = await apiRequest('PATCH', `/api/seller/products/${id}`, rest);
-        const jsonData = await res.json();
+        
+        // Add missing fields that might be required by the schema
+        const completeData = {
+          ...rest,
+          // Set default slug if not provided
+          slug: rest.slug || rest.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        };
+        
+        console.log("Complete product update data:", completeData);
+        
+        const res = await apiRequest('PATCH', `/api/seller/products/${id}`, completeData);
+        console.log("Server response status:", res.status);
+        
+        // Get the response text
+        const responseText = await res.text();
+        console.log("Raw response:", responseText);
+        
+        // Try to parse as JSON if possible
+        let jsonData;
+        try {
+          jsonData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          throw new Error(`Failed to parse server response: ${responseText}`);
+        }
+        
         return jsonData;
       } catch (error) {
         console.error("Error updating product:", error);
@@ -581,7 +639,7 @@ const SellerDashboard = () => {
                           
                           <FormField
                             control={form.control}
-                            name="isFeatured"
+                            name="featured"
                             render={({ field }) => (
                               <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                 <FormControl>
@@ -629,7 +687,7 @@ const SellerDashboard = () => {
                           
                           <FormField
                             control={form.control}
-                            name="isBestseller"
+                            name="isBestSeller"
                             render={({ field }) => (
                               <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                 <FormControl>
