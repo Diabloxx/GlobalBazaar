@@ -93,26 +93,65 @@ export function setupAuth(app: Express) {
 
 // Middleware to check if user is authenticated
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  console.log("Authentication check for path:", req.path);
+  console.log("Session ID:", req.sessionID);
+  console.log("Is authenticated:", req.isAuthenticated());
+  
   if (req.isAuthenticated()) {
+    console.log("User authenticated:", req.user.id, req.user.username);
     return next();
   }
+  
+  console.log("Authentication failed - no valid session");
   return res.status(401).json({ message: 'You must be logged in to access this resource' });
 }
 
 // Middleware to check if user is a seller
 export function isSeller(req: Request, res: Response, next: NextFunction) {
-  if (req.isAuthenticated() && (req.user.role === 'seller' || req.user.role === 'admin')) {
+  console.log("Seller authorization check for path:", req.path);
+  
+  if (!req.isAuthenticated()) {
+    console.log("Seller check failed - user not authenticated");
+    return res.status(401).json({ message: 'You must be logged in to access this resource' });
+  }
+  
+  console.log("User authenticated for seller check:", req.user.id, req.user.username);
+  console.log("User role:", req.user.role);
+  
+  if (req.user.role === 'seller' || req.user.role === 'admin') {
+    console.log("User authorized as seller or admin");
     return next();
   }
-  return res.status(403).json({ message: 'You must be a seller to access this resource' });
+  
+  console.log("Seller authorization failed - user is not a seller or admin");
+  return res.status(403).json({ 
+    message: 'You must be a seller to access this resource',
+    userRole: req.user.role
+  });
 }
 
 // Middleware to check if user is an admin
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+  console.log("Admin authorization check for path:", req.path);
+  
+  if (!req.isAuthenticated()) {
+    console.log("Admin check failed - user not authenticated");
+    return res.status(401).json({ message: 'You must be logged in to access this resource' });
+  }
+  
+  console.log("User authenticated for admin check:", req.user.id, req.user.username);
+  console.log("User role:", req.user.role);
+  
+  if (req.user.role === 'admin') {
+    console.log("User authorized as admin");
     return next();
   }
-  return res.status(403).json({ message: 'You must be an admin to access this resource' });
+  
+  console.log("Admin authorization failed - user is not an admin");
+  return res.status(403).json({ 
+    message: 'You must be an admin to access this resource',
+    userRole: req.user.role
+  });
 }
 
 // Middleware to ensure a session exists for tracking purposes

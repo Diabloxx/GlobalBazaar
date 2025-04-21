@@ -68,26 +68,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               const parsedUser = JSON.parse(storedUser);
               console.log("Found user in localStorage:", parsedUser);
               
-              // If we have stored credentials, try silent re-login (this is dev-only, not for production)
-              if (parsedUser.username && localStorage.getItem('_dev_password')) {
-                try {
-                  console.log("Attempting silent re-login...");
-                  const loginResult = await apiRequest('POST', '/api/auth/login', {
+              // Always attempt silent re-login if we have a stored user
+              // This is needed because cookies may have expired but we still have user data
+              try {
+                console.log("Attempting silent re-login...");
+                
+                // Get stored credentials for development
+                const storedPassword = localStorage.getItem('_dev_password');
+                const password = storedPassword || 'password'; // Fallback for testing
+                
+                // Attempt to login with stored username
+                const response = await fetch('/api/auth/login', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
                     username: parsedUser.username,
-                    password: localStorage.getItem('_dev_password')
-                  });
-                  
-                  if (loginResult.ok) {
-                    const refreshedUser = await loginResult.json();
-                    console.log("Silent re-login successful:", refreshedUser);
-                    setUser(refreshedUser);
-                    localStorage.setItem('user', JSON.stringify(refreshedUser));
-                    setIsLoading(false);
-                    return;
-                  }
-                } catch (loginError) {
-                  console.error("Silent re-login failed:", loginError);
+                    password: password
+                  }),
+                  credentials: 'include'
+                });
+                
+                if (response.ok) {
+                  const refreshedUser = await response.json();
+                  console.log("Silent re-login successful:", refreshedUser);
+                  setUser(refreshedUser);
+                  localStorage.setItem('user', JSON.stringify(refreshedUser));
+                  setIsLoading(false);
+                  return;
+                } else {
+                  console.warn("Silent re-login failed with status:", response.status);
+                  const errorText = await response.text();
+                  console.warn("Error response:", errorText);
                 }
+              } catch (loginError) {
+                console.error("Silent re-login failed with error:", loginError);
               }
               
               // Set user from localStorage if no re-auth was possible

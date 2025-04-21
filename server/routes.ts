@@ -345,24 +345,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // User login
   app.post("/api/auth/login", (req, res, next) => {
+    console.log("Login attempt for user:", req.body.username);
+    
     passport.authenticate('local', (err, user, info) => {
       if (err) {
         console.error("Login error:", err);
-        return res.status(500).json({ message: "Login failed" });
+        return res.status(500).json({ message: "Login failed", error: err.message });
       }
       
       if (!user) {
+        console.log("Authentication failed for user:", req.body.username);
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
+      
+      console.log("User authenticated successfully:", user.username, "with role:", user.role);
       
       req.login(user, (err) => {
         if (err) {
           console.error("Login session error:", err);
-          return res.status(500).json({ message: "Login failed" });
+          return res.status(500).json({ message: "Login session initialization failed", error: err.message });
         }
+        
+        // Log session details for debugging
+        console.log("Login successful. Session ID:", req.sessionID);
+        console.log("Session expiry:", req.session.cookie.expires);
         
         // Don't send back the password
         const { password, ...userWithoutPassword } = user;
+        
+        // Success response
+        console.log("Sending user data back to client:", userWithoutPassword.id);
         return res.json(userWithoutPassword);
       });
     })(req, res, next);
@@ -381,16 +393,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get current user
   app.get("/api/auth/user", (req, res) => {
+    console.log("Auth check requested. Session ID:", req.sessionID);
+    console.log("Is authenticated:", req.isAuthenticated());
+    console.log("Session:", req.session);
+    
     if (!req.isAuthenticated() || !req.user) {
+      console.log("Not authenticated, no valid session");
       return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    console.log("User found in session:", req.user.id, req.user.username);
     
     // Get the latest user data from the database
     storage.getUser(req.user.id)
       .then(user => {
         if (!user) {
+          console.log("User not found in database despite being in session:", req.user.id);
           return res.status(404).json({ message: "User not found" });
         }
+        
+        console.log("User retrieved from database:", user.id, user.username, "with role:", user.role);
         
         // Don't send back the password
         const { password, ...userWithoutPassword } = user;
@@ -398,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
       .catch(error => {
         console.error("Error fetching user:", error);
-        res.status(500).json({ message: "Failed to fetch user data" });
+        res.status(500).json({ message: "Failed to fetch user data", error: error.message });
       });
   });
   
