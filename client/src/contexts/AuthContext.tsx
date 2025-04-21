@@ -187,23 +187,53 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
-      // Call the server logout endpoint
-      await apiRequest('POST', '/api/auth/logout');
+      console.log('Logging out user:', user?.username);
+      
+      // Call the server logout endpoint with credentials to ensure cookies are sent
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn(`Logout request failed with status: ${response.status}`);
+        const errorText = await response.text();
+        console.warn('Error response:', errorText);
+      } else {
+        console.log('Server logout successful');
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Always clear local state even if server logout fails
+      console.log('Clearing local user state and storage');
       setUser(null);
       localStorage.removeItem('user');
+      localStorage.removeItem('_dev_password');
+      
+      // Clear any sensitive data from memory
+      if (window.sessionStorage) {
+        try {
+          sessionStorage.clear();
+        } catch (e) {
+          console.error('Failed to clear session storage:', e);
+        }
+      }
       
       toast({
         title: 'Logged out',
         description: 'You have been successfully logged out',
       });
       
-      // Invalidate any cached queries that might depend on auth state
-      queryClient.invalidateQueries();
+      // Invalidate all cached queries to ensure fresh data on next login
+      console.log('Invalidating all queries');
+      queryClient.clear();
+      setIsLoading(false);
     }
   };
 
