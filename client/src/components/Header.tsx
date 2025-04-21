@@ -137,7 +137,7 @@ const Header = () => {
           <div className="ml-0 md:ml-6 flex">
             <button 
               onClick={openCart} 
-              className="relative p-2 text-gray-700 hover:text-primary"
+              className="relative p-2 text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary"
               aria-label="Open cart"
             >
               <ShoppingCart className="h-6 w-6" />
@@ -155,17 +155,17 @@ const Header = () => {
       </div>
       
       {/* Navigation */}
-      <nav className="border-t border-gray-200">
+      <nav className="border-t border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4">
           {/* Desktop Navigation */}
           <div className="hidden md:flex space-x-8 py-3">
-            <Link href="/" className={location === '/' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+            <Link href="/" className={location === '/' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
               Home
             </Link>
 
             {/* Categories Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center font-medium text-gray-700 hover:text-primary">
+              <DropdownMenuTrigger className="flex items-center font-medium text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary">
                 Categories <ChevronDown className="h-4 w-4 ml-1" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
@@ -182,32 +182,32 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Link href="/sale" className={location === '/sale' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+            <Link href="/sale" className={location === '/sale' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
               Sale
             </Link>
             
-            <Link href="/new-arrivals" className={location === '/new-arrivals' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+            <Link href="/new-arrivals" className={location === '/new-arrivals' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
               New Arrivals
             </Link>
             
-            <Link href="/bestsellers" className={location === '/bestsellers' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+            <Link href="/bestsellers" className={location === '/bestsellers' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
               Bestsellers
             </Link>
             
             {/* Show seller dashboard for sellers and admins */}
             {user?.role === 'seller' || user?.role === 'admin' ? (
-              <Link href="/seller" className={location === '/seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+              <Link href="/seller" className={location === '/seller' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
                 <div className="flex items-center">
-                  <div className="bg-gray-100 rounded-full p-1 mr-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
                     <Store className="h-4 w-4 text-primary" />
                   </div>
                   Seller Dashboard
                 </div>
               </Link>
             ) : user ? (
-              <Link href="/become-seller" className={location === '/become-seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+              <Link href="/become-seller" className={location === '/become-seller' ? "text-primary font-medium" : "text-gray-700 dark:text-gray-200 font-medium hover:text-primary dark:hover:text-primary"}>
                 <div className="flex items-center">
-                  <div className="bg-gray-100 rounded-full p-1 mr-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
                     <Store className="h-4 w-4 text-primary" />
                   </div>
                   Become a Seller
@@ -220,7 +220,7 @@ const Header = () => {
           <div className="md:hidden py-3 flex justify-between items-center">
             <button 
               onClick={toggleMobileMenu} 
-              className="text-gray-700"
+              className="text-gray-700 dark:text-gray-200"
               aria-label="Toggle mobile menu"
             >
               <Menu className="h-6 w-6" />
@@ -233,43 +233,43 @@ const Header = () => {
       
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
           <div className="px-4 py-2">
-            <Link href="/sale" className="block py-2 text-gray-700 font-medium">Sale</Link>
-            <Link href="/new-arrivals" className="block py-2 text-gray-700 font-medium">New Arrivals</Link>
-            <Link href="/bestsellers" className="block py-2 text-gray-700 font-medium">Bestsellers</Link>
+            <Link href="/sale" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">Sale</Link>
+            <Link href="/new-arrivals" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">New Arrivals</Link>
+            <Link href="/bestsellers" className="block py-2 text-gray-700 dark:text-gray-200 font-medium">Bestsellers</Link>
             
             {/* Seller links for mobile */}
             {user?.role === 'seller' || user?.role === 'admin' ? (
-              <Link href="/seller" className="block py-2 text-gray-700 font-medium flex items-center">
-                <div className="bg-gray-100 rounded-full p-1 mr-1">
+              <Link href="/seller" className="block py-2 text-gray-700 dark:text-gray-200 font-medium flex items-center">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
                   <Store className="h-4 w-4 text-primary" />
                 </div>
                 Seller Dashboard
               </Link>
             ) : user ? (
-              <Link href="/become-seller" className="block py-2 text-gray-700 font-medium flex items-center">
-                <div className="bg-gray-100 rounded-full p-1 mr-1">
+              <Link href="/become-seller" className="block py-2 text-gray-700 dark:text-gray-200 font-medium flex items-center">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-1 mr-1">
                   <Store className="h-4 w-4 text-primary" />
                 </div>
                 Become a Seller
               </Link>
             ) : null}
             
-            <div className="h-px bg-gray-200 my-2"></div>
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
             
             <div className="flex items-center py-2">
-              <span className="text-gray-700 font-medium mr-2">Theme:</span>
+              <span className="text-gray-700 dark:text-gray-200 font-medium mr-2">Theme:</span>
               <ThemeToggle />
             </div>
             
-            <div className="h-px bg-gray-200 my-2"></div>
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
             
             {categories.map((category) => (
               <Link 
                 key={category.id}
                 href={`/category/${category.slug}`} 
-                className="block py-2 text-gray-700 font-medium"
+                className="block py-2 text-gray-700 dark:text-gray-200 font-medium"
               >
                 {category.name}
               </Link>
