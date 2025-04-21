@@ -733,6 +733,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error processing seller application" });
     }
   });
+
+  // Seller API - Get seller's products
+  app.get("/api/seller/products", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view your products" });
+      }
+
+      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
+      }
+
+      // Get all products where sellerId matches the user's ID
+      const products = await storage.getProducts();
+      const sellerProducts = products.filter(product => product.sellerId === req.user.id);
+      
+      res.json(sellerProducts);
+    } catch (error) {
+      console.error("Seller products fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch seller products" });
+    }
+  });
+
+  // Seller API - Create a product
+  app.post("/api/seller/products", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to create a product" });
+      }
+
+      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
+      }
+
+      const productData = insertProductSchema.parse(req.body);
+      
+      // Automatically set the seller ID to the current user
+      productData.sellerId = req.user.id;
+      
+      // Generate a slug from the product name if not provided
+      if (!productData.slug) {
+        productData.slug = productData.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      console.error("Seller create product error:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  // Seller API - Update a product
+  app.patch("/api/seller/products/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to update a product" });
+      }
+
+      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
+      }
+
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      // Verify the product belongs to the seller
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      if (product.sellerId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You can only update your own products" });
+      }
+
+      const productData = req.body;
+      
+      // Ensure sellerId can't be changed
+      delete productData.sellerId;
+      
+      // Update the product
+      const updatedProduct = await storage.updateProduct(productId, productData);
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Seller update product error:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  // Seller API - Delete a product
+  app.delete("/api/seller/products/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to delete a product" });
+      }
+
+      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
+      }
+
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      // Verify the product belongs to the seller
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      if (product.sellerId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You can only delete your own products" });
+      }
+
+      // Delete the product
+      await storage.deleteProduct(productId);
+      res.status(200).json({ message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Seller delete product error:", error);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Seller API - Get seller's orders
+  app.get("/api/seller/orders", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view your orders" });
+      }
+
+      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
+      }
+
+      // Get all orders (in a real application, we would filter by seller)
+      // For now, just return all orders as a demonstration
+      const allOrders = await storage.getAllOrders();
+      
+      // Mock implementation: just returning all orders
+      // In a real app, we would find orders containing products from this seller
+      res.json(allOrders);
+    } catch (error) {
+      console.error("Seller orders fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch seller orders" });
+    }
+  });
   
   // AI-powered product recommendation
   app.post("/api/ai/recommend", async (req, res) => {
