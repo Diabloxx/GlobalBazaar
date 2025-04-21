@@ -14,6 +14,7 @@ import { Loader2, Check, CreditCard, ShoppingCart, Shield } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import PaymentMethodSelector from '@/components/payments/PaymentMethodSelector';
+import { CountrySelect } from '@/components/ui/country-select';
 
 interface CheckoutForm {
   fullName: string;
@@ -35,7 +36,7 @@ const Checkout = () => {
   const { currency, convertPrice } = useCurrency();
   const [step, setStep] = useState<'shipping' | 'payment' | 'complete'>('shipping');
 
-  const { register, handleSubmit, setValue, formState: { errors, isValid } } = useForm<CheckoutForm>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isValid } } = useForm<CheckoutForm>({
     mode: 'onChange',
     defaultValues: {
       fullName: user?.fullName || '',
@@ -159,6 +160,10 @@ const Checkout = () => {
 
   // Helper to get form value
   const getValue = (field: keyof CheckoutForm) => {
+    if (field === 'country') {
+      // For country, use the react-hook-form value directly
+      return watch('country');
+    }
     return document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       `[name="${field}"]`
     )?.value || '';
@@ -312,10 +317,19 @@ const Checkout = () => {
                       <label className="block text-sm font-medium mb-1">
                         Country*
                       </label>
-                      <Input
-                        {...register('country', { required: 'Country is required' })}
-                        className={errors.country ? 'border-red-500' : ''}
+                      <CountrySelect
+                        value={getValue('country')}
+                        onValueChange={(value) => {
+                          setValue('country', value, { shouldValidate: true });
+                          // Add a hidden input with the country value for form submission
+                          const hiddenInput = document.querySelector<HTMLInputElement>('input[name="country"]');
+                          if (hiddenInput) {
+                            hiddenInput.value = value;
+                          }
+                        }}
+                        error={!!errors.country}
                       />
+                      <input type="hidden" {...register('country', { required: 'Country is required' })} />
                       {errors.country && (
                         <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>
                       )}
