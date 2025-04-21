@@ -105,7 +105,7 @@ const BecomeSeller = () => {
       taxId: "",
       storeDescription: "",
       productCategories: "",
-      termsAgreed: false,
+      termsAgreed: false as unknown as true,
     },
   });
 

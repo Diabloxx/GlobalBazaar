@@ -193,14 +193,18 @@ const Header = () => {
             {user?.role === 'seller' || user?.role === 'admin' ? (
               <Link href="/seller" className={location === '/seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
                 <div className="flex items-center">
-                  <Store className="h-4 w-4 mr-1" />
+                  <div className="bg-gray-100 rounded-full p-1 mr-1">
+                    <Store className="h-4 w-4 text-primary" />
+                  </div>
                   Seller Dashboard
                 </div>
               </Link>
             ) : user ? (
               <Link href="/become-seller" className={location === '/become-seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
                 <div className="flex items-center">
-                  <Store className="h-4 w-4 mr-1" />
+                  <div className="bg-gray-100 rounded-full p-1 mr-1">
+                    <Store className="h-4 w-4 text-primary" />
+                  </div>
                   Become a Seller
                 </div>
               </Link>
@@ -233,12 +237,16 @@ const Header = () => {
             {/* Seller links for mobile */}
             {user?.role === 'seller' || user?.role === 'admin' ? (
               <Link href="/seller" className="block py-2 text-gray-700 font-medium flex items-center">
-                <Store className="h-4 w-4 mr-1" />
+                <div className="bg-gray-100 rounded-full p-1 mr-1">
+                  <Store className="h-4 w-4 text-primary" />
+                </div>
                 Seller Dashboard
               </Link>
             ) : user ? (
               <Link href="/become-seller" className="block py-2 text-gray-700 font-medium flex items-center">
-                <Store className="h-4 w-4 mr-1" />
+                <div className="bg-gray-100 rounded-full p-1 mr-1">
+                  <Store className="h-4 w-4 text-primary" />
+                </div>
                 Become a Seller
               </Link>
             ) : null}
