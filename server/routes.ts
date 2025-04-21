@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee } from "./stripe";
 import { 
   insertUserSchema, 
   insertCartItemSchema,
@@ -15,7 +16,6 @@ import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
 import bcrypt from "bcryptjs";
 import { WebSocketServer } from "ws";
 import Stripe from "stripe";
-import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee } from "./stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
@@ -1554,6 +1554,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error setting master password:", error);
       res.status(500).json({ message: "Error setting master password" });
     }
+  });
+
+  // =================== Payment Endpoints =================== //
+  
+  // Create a payment intent with Stripe
+  app.post("/api/payments/create-intent", isAuthenticated, async (req, res) => {
+    try {
+      const { amount, currency = 'usd' } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+      
+      let customerId: string | undefined;
+      
+      // If user exists, get or create Stripe customer
+      if (req.user) {
+        // Use existing customer ID or create a new one
+        if (req.user.stripeCustomerId) {
+          customerId = req.user.stripeCustomerId;
+        } else {
+          customerId = await getOrCreateStripeCustomer(req.user);
+          
+          // Update user with new Stripe customer ID
+          await storage.updateStripeCustomerId(req.user.id, customerId);
+        }
+      }
+      
+      // Create payment intent
+      const paymentIntent = await createPaymentIntent(amount, currency, customerId);
+      
+      // Return client secret for the frontend
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error) {
+      console.error("Payment intent creation error:", error);
+      res.status(500).json({ 
+        message: "Failed to create payment intent",
+        error: error.message 
+      });
+    }
+  });
+  
+  // Update an order after successful payment
+  app.post("/api/payments/confirm", isAuthenticated, async (req, res) => {
+    try {
+      const { orderId, paymentIntentId, paymentMethod } = req.body;
+      
+      if (!orderId || !paymentIntentId || !paymentMethod) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Verify the order belongs to the user
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ message: "You can only update your own orders" });
+      }
+      
+      // Update order status and payment method
+      const updatedOrder = await storage.updateOrderStatus(orderId, "paid");
+      
+      // Process payout to sellers (in a real app, this would be done in a background job)
+      if (updatedOrder) {
+        // Get all unique seller IDs from the order items
+        const items = Array.isArray(updatedOrder.items) 
+          ? updatedOrder.items 
+          : typeof updatedOrder.items === 'object' 
+            ? [updatedOrder.items] 
+            : JSON.parse(updatedOrder.items as unknown as string);
+        
+        // This is a simplified version - in a real app, you'd process payouts for each seller
+        // based on their items in the order, minus platform fees
+        console.log(`Order ${orderId} processed for payment. Items:`, items);
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Payment confirmed and order updated",
+        order: updatedOrder
+      });
+    } catch (error) {
+      console.error("Payment confirmation error:", error);
+      res.status(500).json({ 
+        message: "Failed to confirm payment",
+        error: error.message 
+      });
+    }
+  });
+  
+  // Get supported payment methods
+  app.get("/api/payments/methods", (req, res) => {
+    // Return list of supported payment methods
+    // In a real app, this might be dynamic based on user location, etc.
+    res.json([
+      { id: 'stripe', name: 'Credit / Debit Card', enabled: true },
+      { id: 'paypal', name: 'PayPal', enabled: false },  // Simulating PayPal being disabled as requested
+      { id: 'applepay', name: 'Apple Pay', enabled: true },
+      { id: 'googlepay', name: 'Google Pay', enabled: true },
+      { id: 'bank_transfer', name: 'Bank Transfer', enabled: true },
+    ]);
   });
 
   return httpServer;
