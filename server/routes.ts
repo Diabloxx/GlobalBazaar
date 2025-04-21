@@ -1593,10 +1593,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // AI-powered product recommendation (using fallback mechanism only)
+  // Product recommendation using our self-learning local recommendation engine
   app.post("/api/ai/recommend", async (req, res) => {
     try {
-      const { query, userPreferences, priceRange, categoryId, browsedProducts } = req.body;
+      const { query, categoryId, browsedProducts = [] } = req.body;
       
       if (!query) {
         return res.status(400).json({ message: "Query is required" });
@@ -1605,21 +1605,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all products to match against
       const allProducts = await storage.getProducts();
       
-      // Import only the fallback function we need to avoid OpenAI API quota issues
-      const { getFallbackRecommendations } = await import("./openai");
+      // Import our local recommender engine
+      const recommender = (await import("./localRecommender")).default;
       
-      console.log(`Getting keyword-based recommendations for query: "${query}"`);
+      // Initialize the engine with products if not already done
+      // This is safe to call multiple times as it's idempotent
+      recommender.initializeProducts(allProducts);
       
-      // Use only our keyword-based recommendation system to avoid OpenAI API quota issues
-      const recommendations = getFallbackRecommendations(
+      // Get the user ID if authenticated
+      const userId = req.isAuthenticated() ? req.user.id : undefined;
+      const sessionId = req.sessionID;
+      
+      console.log(`Getting local ML recommendations for query: "${query}"`);
+      
+      // Process this query to update our recommendation model
+      recommender.processQuery(query, userId, sessionId);
+      
+      // Process browsed products to update our recommendation model
+      if (browsedProducts && browsedProducts.length > 0) {
+        browsedProducts.forEach((productId: number) => {
+          recommender.recordProductView(productId, userId, sessionId);
+        });
+      }
+      
+      // Get recommendations from our local engine
+      const recommendations = recommender.getRecommendations(
         query,
         allProducts,
-        categoryId
+        categoryId,
+        userId,
+        sessionId,
+        8 // Limit to 8 products max
       );
       
       // Get the actual product objects for recommended product IDs
       const recommendedProducts = [];
-      for (const productId of recommendations.recommendedProducts) {
+      for (const productId of recommendations.products) {
         const product = await storage.getProduct(productId);
         if (product) {
           recommendedProducts.push(product);
@@ -1629,7 +1650,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If we still don't have enough recommendations, add bestsellers
       if (recommendedProducts.length < 4) {
         const bestsellers = await storage.getBestsellerProducts();
-        const needed = 4 - recommendedProducts.length;
         
         // Add bestsellers that aren't already in the recommendations
         for (const product of bestsellers) {
@@ -1640,8 +1660,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Track this as user activity
+      if (userId || sessionId) {
+        await storage.recordUserActivity({
+          userId: userId || null,
+          sessionId,
+          activityType: 'recommendation',
+          details: { 
+            query,
+            recommendationCount: recommendedProducts.length
+          }
+        });
+      }
+      
       res.json({
-        message: recommendations.message,
+        message: recommendations.explanation,
         products: recommendedProducts
       });
     } catch (error) {
