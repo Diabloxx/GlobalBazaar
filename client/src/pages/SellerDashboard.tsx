@@ -162,22 +162,62 @@ const SellerDashboard = () => {
   }, [editingProduct, form]);
 
   // Fetch products for seller view
-  const { data: sellerProducts = [], isLoading: productsLoading } = useQuery({
+  const { data: sellerProducts = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['/api/seller/products'],
     enabled: isAuthenticated && (user?.role === 'seller' || user?.role === 'admin'),
-    select: (data) => {
-      // This ensures we're processing the response data correctly
-      return Array.isArray(data) ? data : [];
+    queryFn: async ({ queryKey }) => {
+      try {
+        const response = await fetch(queryKey[0] as string, {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          console.error('Error fetching seller products:', response.status, response.statusText);
+          return [];
+        }
+        
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          return Array.isArray(json) ? json : [];
+        } catch (parseError) {
+          console.error('JSON parse error in products:', parseError, 'Response text:', text);
+          return [];
+        }
+      } catch (error) {
+        console.error('Fetch error in products:', error);
+        return [];
+      }
     }
   });
 
   // Fetch orders for seller view
-  const { data: sellerOrders = [], isLoading: ordersLoading } = useQuery({
+  const { data: sellerOrders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['/api/seller/orders'],
     enabled: isAuthenticated && (user?.role === 'seller' || user?.role === 'admin'),
-    select: (data) => {
-      // This ensures we're processing the response data correctly
-      return Array.isArray(data) ? data : [];
+    queryFn: async ({ queryKey }) => {
+      try {
+        const response = await fetch(queryKey[0] as string, {
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          console.error('Error fetching seller orders:', response.status, response.statusText);
+          return [];
+        }
+        
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          return Array.isArray(json) ? json : [];
+        } catch (parseError) {
+          console.error('JSON parse error in orders:', parseError, 'Response text:', text);
+          return [];
+        }
+      } catch (error) {
+        console.error('Fetch error in orders:', error);
+        return [];
+      }
     }
   });
 
@@ -766,9 +806,9 @@ const SellerDashboard = () => {
                             {product.inventory === 0 ? (
                               <Badge variant="destructive">Out of Stock</Badge>
                             ) : product.inventory < 10 ? (
-                              <Badge variant="warning">Low Stock</Badge>
+                              <Badge variant="secondary">Low Stock</Badge>
                             ) : (
-                              <Badge variant="success">In Stock</Badge>
+                              <Badge variant="outline">In Stock</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -849,8 +889,8 @@ const SellerDashboard = () => {
                           <TableCell>
                             <Badge 
                               variant={
-                                order.status === 'completed' ? 'success' : 
-                                order.status === 'processing' ? 'warning' : 
+                                order.status === 'completed' ? 'outline' : 
+                                order.status === 'processing' ? 'secondary' : 
                                 order.status === 'cancelled' ? 'destructive' : 
                                 'outline'
                               }
