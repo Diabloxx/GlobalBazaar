@@ -23,6 +23,7 @@ import BecomeSeller from "@/pages/BecomeSeller";
 import CustomerService from "@/pages/CustomerService";
 import About from "@/pages/About";
 import AdminTest from "@/pages/AdminTest";
+import SearchPage from "@/pages/SearchPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/sale" component={CategoryProducts} />
       <Route path="/new-arrivals" component={CategoryProducts} />
       <Route path="/bestsellers" component={CategoryProducts} />
+      <Route path="/search" component={SearchPage} />
       <Route path="/customer-service" component={CustomerService} />
       <Route path="/about" component={About} />
       <Route path="/admin-test" component={AdminTest} />
