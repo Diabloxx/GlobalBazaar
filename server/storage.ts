@@ -7,7 +7,9 @@ import {
   wishlistItems, type WishlistItem, type InsertWishlistItem,
   Currency, currencySchema,
   productReviews, type ProductReview, type InsertProductReview,
-  userActivity, type UserActivity, type InsertUserActivity
+  userActivity, type UserActivity, type InsertUserActivity,
+  sellerTutorialSteps, type SellerTutorialStep, type InsertSellerTutorialStep,
+  sellerTutorialProgress, type SellerTutorialProgress, type InsertSellerTutorialProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { 
@@ -98,6 +100,22 @@ export interface IStorage {
   updateProductReview(id: number, reviewData: Partial<InsertProductReview>): Promise<ProductReview | undefined>;
   deleteProductReview(id: number): Promise<boolean>;
   getProductAverageRating(productId: number): Promise<number>;
+  
+  // Seller Tutorial operations
+  getTutorialSteps(): Promise<SellerTutorialStep[]>;
+  getTutorialStep(id: number): Promise<SellerTutorialStep | undefined>;
+  getTutorialStepsByCategory(category: string): Promise<SellerTutorialStep[]>;
+  createTutorialStep(step: InsertSellerTutorialStep): Promise<SellerTutorialStep>;
+  updateTutorialStep(id: number, stepData: Partial<InsertSellerTutorialStep>): Promise<SellerTutorialStep | undefined>;
+  deleteTutorialStep(id: number): Promise<boolean>;
+  
+  // Seller Tutorial Progress operations
+  getUserTutorialProgress(userId: number): Promise<(SellerTutorialProgress & { step: SellerTutorialStep })[]>;
+  getTutorialProgressByUserAndStep(userId: number, stepId: number): Promise<SellerTutorialProgress | undefined>;
+  createTutorialProgress(progress: InsertSellerTutorialProgress): Promise<SellerTutorialProgress>;
+  updateTutorialProgress(id: number, progressData: Partial<InsertSellerTutorialProgress>): Promise<SellerTutorialProgress | undefined>;
+  markTutorialStepCompleted(userId: number, stepId: number, notes?: string): Promise<SellerTutorialProgress | undefined>;
+  resetUserTutorialProgress(userId: number): Promise<boolean>;
 }
 
 // In-memory storage implementation
@@ -789,6 +807,11 @@ export class MemStorage implements IStorage {
 // Database storage implementation
 
 export class DatabaseStorage implements IStorage {
+  // Variables for tutorial storage
+  private sellerTutorialStepsMap: Map<number, SellerTutorialStep> = new Map();
+  private sellerTutorialProgressMap: Map<number, SellerTutorialProgress> = new Map();
+  private tutorialStepIdCounter = 1;
+  private tutorialProgressIdCounter = 1;
   // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -1467,6 +1490,120 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(products.id, productId));
     }
+  }
+  
+  // Seller Tutorial operations
+  async getTutorialSteps(): Promise<SellerTutorialStep[]> {
+    return db.select().from(sellerTutorialSteps).orderBy(sellerTutorialSteps.order);
+  }
+  
+  async getTutorialStep(id: number): Promise<SellerTutorialStep | undefined> {
+    const [step] = await db.select().from(sellerTutorialSteps).where(eq(sellerTutorialSteps.id, id));
+    return step;
+  }
+  
+  async getTutorialStepsByCategory(category: string): Promise<SellerTutorialStep[]> {
+    return db
+      .select()
+      .from(sellerTutorialSteps)
+      .where(eq(sellerTutorialSteps.category, category))
+      .orderBy(sellerTutorialSteps.order);
+  }
+  
+  async createTutorialStep(step: InsertSellerTutorialStep): Promise<SellerTutorialStep> {
+    const [newStep] = await db.insert(sellerTutorialSteps).values(step).returning();
+    return newStep;
+  }
+  
+  async updateTutorialStep(id: number, stepData: Partial<InsertSellerTutorialStep>): Promise<SellerTutorialStep | undefined> {
+    const [updatedStep] = await db
+      .update(sellerTutorialSteps)
+      .set(stepData)
+      .where(eq(sellerTutorialSteps.id, id))
+      .returning();
+    return updatedStep;
+  }
+  
+  async deleteTutorialStep(id: number): Promise<boolean> {
+    const result = await db.delete(sellerTutorialSteps).where(eq(sellerTutorialSteps.id, id));
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+  
+  // Seller Tutorial Progress operations
+  async getUserTutorialProgress(userId: number): Promise<(SellerTutorialProgress & { step: SellerTutorialStep })[]> {
+    const result = await db
+      .select({
+        progress: sellerTutorialProgress,
+        step: sellerTutorialSteps,
+      })
+      .from(sellerTutorialProgress)
+      .innerJoin(
+        sellerTutorialSteps,
+        eq(sellerTutorialProgress.stepId, sellerTutorialSteps.id)
+      )
+      .where(eq(sellerTutorialProgress.userId, userId))
+      .orderBy(sellerTutorialSteps.order);
+      
+    return result.map(({ progress, step }) => ({
+      ...progress,
+      step,
+    }));
+  }
+  
+  async getTutorialProgressByUserAndStep(userId: number, stepId: number): Promise<SellerTutorialProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(sellerTutorialProgress)
+      .where(
+        and(
+          eq(sellerTutorialProgress.userId, userId),
+          eq(sellerTutorialProgress.stepId, stepId)
+        )
+      );
+    return progress;
+  }
+  
+  async createTutorialProgress(progress: InsertSellerTutorialProgress): Promise<SellerTutorialProgress> {
+    const [newProgress] = await db.insert(sellerTutorialProgress).values(progress).returning();
+    return newProgress;
+  }
+  
+  async updateTutorialProgress(id: number, progressData: Partial<InsertSellerTutorialProgress>): Promise<SellerTutorialProgress | undefined> {
+    const [updatedProgress] = await db
+      .update(sellerTutorialProgress)
+      .set(progressData)
+      .where(eq(sellerTutorialProgress.id, id))
+      .returning();
+    return updatedProgress;
+  }
+  
+  async markTutorialStepCompleted(userId: number, stepId: number, notes?: string): Promise<SellerTutorialProgress | undefined> {
+    // Check if there's an existing progress record
+    const existingProgress = await this.getTutorialProgressByUserAndStep(userId, stepId);
+    
+    if (existingProgress) {
+      // Update existing progress
+      return this.updateTutorialProgress(existingProgress.id, {
+        isCompleted: true,
+        completedAt: new Date(),
+        notes: notes || existingProgress.notes
+      });
+    } else {
+      // Create new progress
+      const newProgress = await this.createTutorialProgress({
+        userId,
+        stepId,
+        isCompleted: true,
+        completedAt: new Date(),
+        notes
+      });
+      return newProgress;
+    }
+  }
+  
+  async resetUserTutorialProgress(userId: number): Promise<boolean> {
+    const result = await db.delete(sellerTutorialProgress).where(eq(sellerTutorialProgress.userId, userId));
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 
