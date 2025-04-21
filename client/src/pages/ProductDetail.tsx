@@ -184,8 +184,8 @@ const ProductDetail = () => {
   if (error || !product) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Product Not Found</h2>
-        <p className="text-gray-600 mb-8">Sorry, we couldn't find the product you're looking for.</p>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Product Not Found</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">Sorry, we couldn't find the product you're looking for.</p>
         <Button asChild>
           <a href="/" className="bg-primary text-white px-6 py-2 rounded-full">
             Continue Shopping
@@ -207,7 +207,7 @@ const ProductDetail = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="text-sm breadcrumbs mb-6">
-        <ul className="flex space-x-2 text-gray-500">
+        <ul className="flex space-x-2 text-gray-500 dark:text-gray-400">
           <li><a href="/" className="hover:text-primary">Home</a></li>
           <li>
             <span className="mx-2">/</span>
@@ -221,7 +221,7 @@ const ProductDetail = () => {
           </li>
           <li>
             <span className="mx-2">/</span>
-            <span className="text-gray-800">{product.name}</span>
+            <span className="text-gray-800 dark:text-gray-100">{product.name}</span>
           </li>
         </ul>
       </div>
@@ -241,7 +241,7 @@ const ProductDetail = () => {
 
         {/* Product Info */}
         <div className="lg:w-1/2">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{product.name}</h1>
           
           {/* Badges for product status */}
           <div className="flex flex-wrap gap-2 mb-4">
@@ -264,7 +264,7 @@ const ProductDetail = () => {
           
           {/* Price */}
           <div className="flex items-baseline mb-6">
-            <span className="text-3xl font-bold text-gray-800">
+            <span className="text-3xl font-bold text-gray-800 dark:text-gray-100">
               {formatCurrency(convertedSalePrice || convertedPrice, currency)}
             </span>
             {convertedSalePrice && (
@@ -383,19 +383,19 @@ const ProductDetail = () => {
           </TabsList>
           <TabsContent value="description" className="mt-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 {product.description}
               </p>
               <ul className="mt-4 space-y-2">
-                <li className="flex items-center text-gray-700">
+                <li className="flex items-center text-gray-700 dark:text-gray-300">
                   <Check className="h-5 w-5 text-primary mr-2" />
                   <span>High quality product</span>
                 </li>
-                <li className="flex items-center text-gray-700">
+                <li className="flex items-center text-gray-700 dark:text-gray-300">
                   <Check className="h-5 w-5 text-primary mr-2" />
                   <span>Satisfaction guaranteed</span>
                 </li>
-                <li className="flex items-center text-gray-700">
+                <li className="flex items-center text-gray-700 dark:text-gray-300">
                   <Check className="h-5 w-5 text-primary mr-2" />
                   <span>Fast shipping worldwide</span>
                 </li>
