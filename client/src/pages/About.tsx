@@ -79,12 +79,12 @@ const About = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold">About Us</h1>
-        <p className="text-gray-600 mt-2">Learn more about ShopEase, our mission, and our team</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">About Us</h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">Learn more about ShopEase, our mission, and our team</p>
       </div>
       
       <Tabs defaultValue={hash} className="space-y-8">
-        <div className="flex justify-center bg-gray-100 p-4 rounded-lg">
+        <div className="flex justify-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
             <TabsTrigger value="about">About ShopEase</TabsTrigger>
             <TabsTrigger value="careers">Careers</TabsTrigger>

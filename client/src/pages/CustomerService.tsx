@@ -164,14 +164,14 @@ const CustomerService = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold">Customer Service</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Customer Service</h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">
           We're here to help! Find answers to your questions or contact our support team.
         </p>
       </div>
       
       <Tabs defaultValue={hash} className="space-y-8">
-        <div className="flex justify-center bg-gray-100 p-4 rounded-lg">
+        <div className="flex justify-center bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
             <TabsTrigger value="contact-us">Contact Us</TabsTrigger>
             <TabsTrigger value="faqs">FAQs</TabsTrigger>
@@ -254,17 +254,17 @@ const CustomerService = () => {
                       {faq.question}
                     </AccordionTrigger>
                     <AccordionContent>
-                      <p className="text-gray-600">{faq.answer}</p>
+                      <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
               
-              <div className="mt-8 bg-gray-50 p-4 rounded-lg flex items-center">
+              <div className="mt-8 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg flex items-center">
                 <HelpCircle className="h-5 w-5 text-primary mr-3" />
                 <div>
-                  <p className="font-medium">Still have questions?</p>
-                  <p className="text-sm text-gray-600">Our team is here to help. Contact us for personalized assistance.</p>
+                  <p className="font-medium dark:text-gray-100">Still have questions?</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Our team is here to help. Contact us for personalized assistance.</p>
                 </div>
                 <Button variant="outline" className="ml-auto">Contact Us</Button>
               </div>
@@ -342,20 +342,20 @@ const CustomerService = () => {
                   <Button>Track Order</Button>
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Your order number can be found in your order confirmation email or by logging into your account.
                   </p>
                 </div>
                 
                 <div className="mt-8">
-                  <h3 className="font-medium text-lg mb-4">Where's my order?</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="font-medium text-lg mb-4 dark:text-gray-100">Where's my order?</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     After placing your order, you'll receive an order confirmation email. Once your order ships, you'll receive another email with tracking information. You can also find tracking information in your account under "Orders".
                   </p>
                   
-                  <h3 className="font-medium text-lg mb-4 mt-6">Need help with your order?</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="font-medium text-lg mb-4 mt-6 dark:text-gray-100">Need help with your order?</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     If you have questions about your order or need assistance, our customer service team is here to help.
                   </p>
                   <Button variant="outline">Contact Customer Service</Button>
