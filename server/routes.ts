@@ -1651,14 +1651,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get supported payment methods
   app.get("/api/payments/methods", (req, res) => {
-    // Return list of supported payment methods
-    // In a real app, this might be dynamic based on user location, etc.
+    // Return list of supported payment methods - Stripe only as per requirement
     res.json([
       { id: 'stripe', name: 'Credit / Debit Card', enabled: true },
-      { id: 'paypal', name: 'PayPal', enabled: false },  // Simulating PayPal being disabled as requested
+      // No PayPal - removed as per requirement
       { id: 'applepay', name: 'Apple Pay', enabled: true },
       { id: 'googlepay', name: 'Google Pay', enabled: true },
-      { id: 'bank_transfer', name: 'Bank Transfer', enabled: true },
     ]);
   });
 

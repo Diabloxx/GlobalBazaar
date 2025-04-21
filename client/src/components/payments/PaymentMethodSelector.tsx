@@ -20,7 +20,7 @@ export default function PaymentMethodSelector({
   amount,
   onSuccess,
   currency = 'USD',
-  availableMethods = ['stripe', 'paypal']
+  availableMethods = ['stripe']
 }: PaymentMethodSelectorProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('stripe');
 
@@ -118,25 +118,7 @@ export default function PaymentMethodSelector({
             />
           )}
           
-          {selectedPaymentMethod === 'paypal' && (
-            <div className="text-center py-6">
-              <h3 className="text-lg font-medium mb-4">PayPal Payment</h3>
-              <p className="text-muted-foreground mb-4">
-                You'll be redirected to PayPal to complete your purchase securely.
-              </p>
-              <button 
-                className="bg-[#0070ba] hover:bg-[#003087] text-white px-6 py-3 rounded-md 
-                           flex items-center justify-center mx-auto"
-                onClick={() => {
-                  // In a real app, replace with actual PayPal checkout logic
-                  alert('PayPal integration will go here');
-                }}
-              >
-                <FaPaypal className="mr-2" />
-                Pay with PayPal
-              </button>
-            </div>
-          )}
+          {/* PayPal payment option removed */}
           
           {selectedPaymentMethod === 'applepay' && (
             <div className="text-center py-6">
@@ -178,20 +160,7 @@ export default function PaymentMethodSelector({
             </div>
           )}
           
-          {selectedPaymentMethod === 'bank_transfer' && (
-            <div className="text-center py-6">
-              <h3 className="text-lg font-medium mb-4">Bank Transfer</h3>
-              <p className="text-muted-foreground mb-4">
-                Make a direct bank transfer to our account.
-              </p>
-              <div className="bg-muted p-4 rounded-md text-left max-w-md mx-auto">
-                <p className="mb-2"><strong>Bank:</strong> Example Bank</p>
-                <p className="mb-2"><strong>Account Name:</strong> Temu E-Commerce Ltd</p>
-                <p className="mb-2"><strong>Account Number:</strong> XXXX-XXXX-XXXX-XXXX</p>
-                <p className="mb-2"><strong>Reference:</strong> ORDER-{Math.floor(Math.random() * 1000000)}</p>
-              </div>
-            </div>
-          )}
+          {/* Bank transfer option removed */}
         </CardContent>
       </Card>
     </div>

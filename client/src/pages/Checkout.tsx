@@ -422,7 +422,7 @@ const Checkout = () => {
                   amount={convertedTotal}
                   onSuccess={handlePaymentSuccess}
                   currency={currency.code}
-                  availableMethods={['stripe', 'bank_transfer']}
+                  availableMethods={['stripe']}
                 />
                 
                 <div className="mt-6 text-sm text-gray-500 text-center">
