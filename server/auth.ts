@@ -5,6 +5,7 @@ import session from 'express-session';
 import { storage } from './storage';
 import { User } from '@shared/schema';
 import MemoryStore from 'memorystore';
+import bcrypt from 'bcryptjs';
 
 // Add type definition for Express User
 declare global {
@@ -51,8 +52,9 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: 'Incorrect username.' });
         }
         
-        // Verify password (in a real app, you'd use bcrypt to hash passwords)
-        if (user.password !== password) {
+        // Verify password using bcrypt
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
           return done(null, false, { message: 'Incorrect password.' });
         }
         

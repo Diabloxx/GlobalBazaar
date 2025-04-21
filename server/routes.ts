@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 import passport from "passport";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
+import bcrypt from "bcryptjs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
@@ -151,7 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username already taken" });
       }
       
-      const user = await storage.createUser(userData);
+      // Hash the password before storing
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      
+      // Replace plain text password with hashed version
+      const userDataWithHashedPassword = {
+        ...userData,
+        password: hashedPassword
+      };
+      
+      const user = await storage.createUser(userDataWithHashedPassword);
       // Don't send back the password
       const { password, ...userWithoutPassword } = user;
       
@@ -243,9 +254,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Simple validation - more robust would use Zod
-      const userData = req.body;
+      const userData = { ...req.body };
+      
+      // If password is being updated, hash it
       if (userData.password) {
-        delete userData.password; // Don't allow password updates via this endpoint
+        const salt = await bcrypt.genSalt(10);
+        userData.password = await bcrypt.hash(userData.password, salt);
       }
       
       const updatedUser = await storage.updateUser(userId, userData);
