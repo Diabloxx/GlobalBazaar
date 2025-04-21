@@ -199,11 +199,11 @@ const AdminDashboard = () => {
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">Avg. Order Value</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Order Value</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold">{analyticsData.averageOrderValue}</div>
+                    <div className="text-2xl font-bold dark:text-gray-100">{analyticsData.averageOrderValue}</div>
                     <Badge variant={analyticsData.aovChange.startsWith('+') ? "success" : "destructive"} className="flex items-center">
                       {analyticsData.aovChange.startsWith('+') ? 
                         <ArrowUpRight className="h-3 w-3 mr-1" /> : 
