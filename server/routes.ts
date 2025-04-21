@@ -1383,14 +1383,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seller API - Get seller's products
   app.get("/api/seller/products", isAuthenticated, isSeller, async (req, res) => {
     try {
-      // Get all products where sellerId matches the user's ID
-      const products = await storage.getProducts();
-      const sellerProducts = products.filter(product => product.sellerId === req.user.id);
+      console.log("Attempting to fetch products for seller:", req.user.id, req.user.username);
       
-      res.json(sellerProducts);
+      // Get all products
+      const products = await storage.getProducts();
+      console.log(`Total products in system: ${products.length}`);
+      
+      // Filter for this seller
+      const sellerProducts = products.filter(product => product.sellerId === req.user.id);
+      console.log(`Products belonging to seller ${req.user.id}: ${sellerProducts.length}`);
+      
+      // Log some sample data for debugging
+      if (sellerProducts.length > 0) {
+        console.log("Sample seller product:", {
+          id: sellerProducts[0].id,
+          name: sellerProducts[0].name,
+          sellerId: sellerProducts[0].sellerId
+        });
+      }
+      
+      // Use our safe JSON serialization method
+      res.jsonSafe(sellerProducts);
     } catch (error) {
       console.error("Seller products fetch error:", error);
-      res.status(500).json({ message: "Failed to fetch seller products" });
+      res.status(500).jsonSafe({ 
+        message: "Failed to fetch seller products",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -1510,10 +1529,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Mock implementation: just returning all orders
       // In a real app, we would find orders containing products from this seller
-      res.json(allOrders);
+      console.log(`Returning ${allOrders.length} orders for seller ${req.user.id}`);
+      res.jsonSafe(allOrders);
     } catch (error) {
       console.error("Seller orders fetch error:", error);
-      res.status(500).json({ message: "Failed to fetch seller orders" });
+      res.status(500).jsonSafe({ 
+        message: "Failed to fetch seller orders",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

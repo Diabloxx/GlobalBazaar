@@ -2,9 +2,47 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Add jsonSafe method to Express Response interface
+declare global {
+  namespace Express {
+    interface Response {
+      jsonSafe: (data: any) => Response;
+    }
+  }
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add custom JSON serialization method to response object
+// This helps prevent "object Object is not valid JSON" errors
+express.response.jsonSafe = function(data: any) {
+  try {
+    // Use a cache to handle circular references
+    const cache = new Set();
+    const safeData = JSON.parse(JSON.stringify(data, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) {
+          return '[Circular Reference]';
+        }
+        cache.add(value);
+      }
+      return value;
+    }));
+    
+    return this.json(safeData);
+  } catch (error) {
+    console.error('JSON serialization error:', error);
+    console.error('Failed to serialize data type:', typeof data);
+    
+    // If serialization fails, send a safe error response
+    return this.status(500).json({
+      error: 'Failed to serialize response data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -42,9 +80,24 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+    
+    console.error("Server error:", {
+      path: _req.path,
+      method: _req.method,
+      status,
+      message,
+      stack: err.stack
+    });
 
-    res.status(status).json({ message });
-    throw err;
+    // Use our safe JSON serialization method
+    res.status(status).jsonSafe({ 
+      message,
+      path: _req.path
+    });
+    
+    if (app.get("env") === "development") {
+      throw err; // Rethrow in development for better error reporting
+    }
   });
 
   // importantly only setup vite in development and after
