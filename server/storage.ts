@@ -700,6 +700,14 @@ export class MemStorage implements IStorage {
     return limit ? activities.slice(0, limit) : activities;
   }
   
+  async getSessionActivity(sessionId: string, limit?: number): Promise<UserActivity[]> {
+    const activities = Array.from(this.userActivities.values())
+      .filter(activity => activity.sessionId === sessionId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    return limit ? activities.slice(0, limit) : activities;
+  }
+  
   async getProductViewHistory(userId: number, limit: number = 10): Promise<number[]> {
     const activities = Array.from(this.userActivities.values())
       .filter(
@@ -1257,6 +1265,20 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(userActivity)
       .where(eq(userActivity.userId, userId))
+      .orderBy(desc(userActivity.createdAt));
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    return query;
+  }
+  
+  async getSessionActivity(sessionId: string, limit?: number): Promise<UserActivity[]> {
+    let query = db
+      .select()
+      .from(userActivity)
+      .where(eq(userActivity.sessionId, sessionId))
       .orderBy(desc(userActivity.createdAt));
     
     if (limit) {

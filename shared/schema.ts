@@ -293,7 +293,7 @@ export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
 // User Activity table to track behavior
 export const userActivity = pgTable("user_activity", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id"), // Made nullable to support anonymous users
   sessionId: text("session_id").notNull(),
   activityType: text("activity_type").notNull(), // "view_product", "add_to_cart", "search", etc.
   details: jsonb("details").notNull(), // { productId, searchQuery, etc. }
