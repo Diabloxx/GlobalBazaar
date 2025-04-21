@@ -140,17 +140,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Search products
+  // Search products with advanced filtering
   app.get("/api/products/search", async (req, res) => {
     try {
-      const query = req.query.q as string;
-      if (!query) {
-        return res.json([]);
+      const query = req.query.q as string || '';
+      
+      // Extract filter options from query parameters
+      const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined;
+      const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined;
+      
+      // Parse category IDs from query string
+      let categoryIds: number[] | undefined = undefined;
+      if (req.query.categoryIds) {
+        if (typeof req.query.categoryIds === 'string') {
+          categoryIds = req.query.categoryIds.split(',').map(id => parseInt(id, 10));
+        } else if (Array.isArray(req.query.categoryIds)) {
+          categoryIds = (req.query.categoryIds as string[]).map(id => parseInt(id, 10));
+        }
       }
       
-      const products = await storage.searchProducts(query);
+      // Get min rating filter
+      const minRating = req.query.minRating ? parseInt(req.query.minRating as string, 10) : undefined;
+      
+      // Get sort order
+      const sortBy = req.query.sortBy as string || undefined;
+      
+      // Apply all filters to search
+      const products = await storage.searchProducts(query, {
+        minPrice,
+        maxPrice,
+        categoryIds,
+        sortBy,
+        minRating
+      });
+      
       res.json(products);
     } catch (error) {
+      console.error("Search error:", error);
       res.status(500).json({ message: "Failed to search products" });
     }
   });

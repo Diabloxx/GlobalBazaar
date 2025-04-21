@@ -9,7 +9,10 @@ import {
   productReviews, type ProductReview, type InsertProductReview
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, and, or, desc, inArray, ne, sql } from "drizzle-orm";
+import { 
+  eq, like, and, or, desc, inArray, ne, sql, 
+  gte, lte, isNull, not
+} from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -38,7 +41,16 @@ export interface IStorage {
   getSaleProducts(): Promise<Product[]>;
   getNewProducts(): Promise<Product[]>;
   getBestsellerProducts(): Promise<Product[]>;
-  searchProducts(query: string): Promise<Product[]>;
+  searchProducts(
+    query: string,
+    options?: {
+      minPrice?: number;
+      maxPrice?: number;
+      categoryIds?: number[];
+      sortBy?: string;
+      minRating?: number;
+    }
+  ): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   
   // Cart operations
@@ -790,17 +802,86 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(products).where(eq(products.isBestSeller, true));
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
-    const searchPattern = `%${query}%`;
-    return db
+  async searchProducts(
+    query: string,
+    options: {
+      minPrice?: number;
+      maxPrice?: number;
+      categoryIds?: number[];
+      sortBy?: string;
+      minRating?: number;
+    } = {}
+  ): Promise<Product[]> {
+    // Start with a query builder
+    let query_builder = db
       .select()
-      .from(products)
-      .where(
+      .from(products);
+    
+    // Apply text search if provided
+    if (query && query.trim() !== '') {
+      const searchPattern = `%${query}%`;
+      query_builder = query_builder.where(
         or(
           like(products.name, searchPattern),
           like(products.description, searchPattern)
         )
       );
+    }
+    
+    // Apply price range filter
+    if (options.minPrice !== undefined) {
+      query_builder = query_builder.where(gte(products.price, options.minPrice));
+    }
+    
+    if (options.maxPrice !== undefined) {
+      query_builder = query_builder.where(
+        or(
+          lte(products.price, options.maxPrice),
+          and(
+            not(isNull(products.salePrice)),
+            lte(products.salePrice, options.maxPrice)
+          )
+        )
+      );
+    }
+    
+    // Apply category filter
+    if (options.categoryIds && options.categoryIds.length > 0) {
+      query_builder = query_builder.where(inArray(products.categoryId, options.categoryIds));
+    }
+    
+    // Apply minimum rating filter
+    if (options.minRating !== undefined && options.minRating > 0) {
+      query_builder = query_builder.where(
+        or(
+          gte(products.rating, options.minRating),
+          isNull(products.rating)
+        )
+      );
+    }
+    
+    // Apply sorting
+    if (options.sortBy) {
+      switch (options.sortBy) {
+        case 'price_asc':
+          query_builder = query_builder.orderBy(products.price, 'asc');
+          break;
+        case 'price_desc':
+          query_builder = query_builder.orderBy(products.price, 'desc');
+          break;
+        case 'rating_desc':
+          query_builder = query_builder.orderBy(desc(products.rating));
+          break;
+        case 'newest':
+          query_builder = query_builder.orderBy(desc(products.createdAt));
+          break;
+        default:
+          // Default is relevance, which doesn't need explicit ordering
+          break;
+      }
+    }
+    
+    return query_builder;
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
