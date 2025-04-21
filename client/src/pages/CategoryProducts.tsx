@@ -160,12 +160,12 @@ const CategoryProducts = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters - Desktop */}
         <div className="hidden lg:block w-64 flex-shrink-0">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="font-bold text-lg mb-4 text-gray-800">Filters</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <h2 className="font-bold text-lg mb-4 text-gray-800 dark:text-gray-100">Filters</h2>
             
             {/* Price Range */}
             <div className="mb-6">
-              <h3 className="font-medium text-gray-800 mb-3">Price Range</h3>
+              <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">Price Range</h3>
               <Slider 
                 defaultValue={[0, 1000]} 
                 max={1000} 
@@ -174,7 +174,7 @@ const CategoryProducts = () => {
                 onValueChange={handlePriceRangeChange}
                 className="mb-2"
               />
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>${priceRange[0]}</span>
                 <span>${priceRange[1]}+</span>
               </div>
@@ -182,7 +182,7 @@ const CategoryProducts = () => {
             
             {/* Filter Options */}
             <div className="space-y-3">
-              <h3 className="font-medium text-gray-800 mb-2">Product Status</h3>
+              <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Product Status</h3>
               
               <div className="flex items-center space-x-2">
                 <Checkbox 
@@ -238,7 +238,7 @@ const CategoryProducts = () => {
           <div className="lg:hidden mb-6 flex items-center justify-between">
             <button 
               onClick={toggleFilters}
-              className="flex items-center bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-700"
+              className="flex items-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200"
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
@@ -260,12 +260,12 @@ const CategoryProducts = () => {
           
           {/* Mobile Filters Panel */}
           {showFilters && (
-            <div className="lg:hidden mb-6 bg-white rounded-lg shadow-sm p-4">
+            <div className="lg:hidden mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-gray-800">Filters</h3>
+                <h3 className="font-bold text-gray-800 dark:text-gray-100">Filters</h3>
                 <button 
                   onClick={toggleFilters}
-                  className="text-gray-500"
+                  className="text-gray-500 dark:text-gray-400"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -275,7 +275,7 @@ const CategoryProducts = () => {
               
               {/* Price Range */}
               <div className="mb-4">
-                <h4 className="font-medium text-gray-800 mb-2">Price Range</h4>
+                <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">Price Range</h4>
                 <Slider 
                   defaultValue={[0, 1000]} 
                   max={1000} 
@@ -284,7 +284,7 @@ const CategoryProducts = () => {
                   onValueChange={handlePriceRangeChange}
                   className="mb-2"
                 />
-                <div className="flex justify-between text-sm text-gray-600">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                   <span>${priceRange[0]}</span>
                   <span>${priceRange[1]}+</span>
                 </div>
@@ -292,7 +292,7 @@ const CategoryProducts = () => {
               
               {/* Filter Options */}
               <div className="space-y-2">
-                <h4 className="font-medium text-gray-800 mb-1">Product Status</h4>
+                <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-1">Product Status</h4>
                 
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -345,8 +345,8 @@ const CategoryProducts = () => {
           {/* Desktop Sort Options */}
           <div className="hidden lg:flex justify-between items-center mb-6">
             <div className="flex items-center space-x-2">
-              <SlidersHorizontal className="h-5 w-5 text-gray-500" />
-              <span className="text-gray-700">
+              <SlidersHorizontal className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-gray-700 dark:text-gray-300">
                 {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
               </span>
             </div>
@@ -369,7 +369,7 @@ const CategoryProducts = () => {
           {isLoadingProducts ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white rounded-lg overflow-hidden shadow-sm">
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm">
                   <Skeleton className="w-full h-48" />
                   <div className="p-4">
                     <Skeleton className="h-4 w-3/4 mb-2" />
@@ -386,10 +386,10 @@ const CategoryProducts = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+            <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
               <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">No Products Found</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">No Products Found</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Try adjusting your filters to find what you're looking for.
               </p>
             </div>
