@@ -348,11 +348,13 @@ export const sellerTutorialSteps = pgTable("seller_tutorial_steps", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   order: integer("order").notNull(),
-  isRequired: boolean("is_required").default(true),
-  estimatedTime: text("estimated_time"),
-  videoUrl: text("video_url"),
-  imageUrl: text("image_url"),
   category: text("category").default("general"),
+  content: text("content").notNull().default("<p>Tutorial content will be added soon.</p>"),
+  imageUrl: text("image_url"),
+  videoUrl: text("video_url"),
+  estimatedTimeMinutes: integer("estimated_time_minutes"),
+  prerequisites: jsonb("prerequisites"),
+  isRequired: boolean("is_required").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
