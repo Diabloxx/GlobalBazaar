@@ -698,7 +698,110 @@ export class DatabaseStorage implements IStorage {
 
   async createOrder(order: InsertOrder): Promise<Order> {
     const [newOrder] = await db.insert(orders).values(order).returning();
+    
+    // Update bestselling products after order is created
+    await this.updateBestsellerProducts(order.items);
+    
     return newOrder;
+  }
+  
+  // Analyze orders and update bestseller flags
+  private async updateBestsellerProducts(newOrderItems: any): Promise<void> {
+    try {
+      // Extract product IDs from the new order
+      const newOrderProductIds = new Set();
+      if (Array.isArray(newOrderItems)) {
+        newOrderItems.forEach(item => {
+          if (item.productId) {
+            newOrderProductIds.add(item.productId);
+          }
+        });
+      } else if (typeof newOrderItems === 'object') {
+        // Handle case where items might be a JSON object
+        Object.values(newOrderItems).forEach((item: any) => {
+          if (item.productId) {
+            newOrderProductIds.add(item.productId);
+          }
+        });
+      }
+      
+      if (newOrderProductIds.size === 0) return;
+      
+      // Get all orders to analyze sales patterns
+      const allOrders = await db.select().from(orders);
+      
+      // Count sales per product
+      const productSalesCount = new Map<number, number>();
+      
+      // Process all orders to count product sales
+      allOrders.forEach(order => {
+        let items = [];
+        
+        try {
+          if (typeof order.items === 'string') {
+            items = JSON.parse(order.items);
+          } else {
+            items = order.items;
+          }
+          
+          if (Array.isArray(items)) {
+            items.forEach(item => {
+              if (item.productId) {
+                const productId = item.productId;
+                const quantity = item.quantity || 1;
+                productSalesCount.set(
+                  productId, 
+                  (productSalesCount.get(productId) || 0) + quantity
+                );
+              }
+            });
+          } else if (typeof items === 'object') {
+            // Handle non-array objects
+            Object.values(items).forEach((item: any) => {
+              if (item.productId) {
+                const productId = item.productId;
+                const quantity = item.quantity || 1;
+                productSalesCount.set(
+                  productId, 
+                  (productSalesCount.get(productId) || 0) + quantity
+                );
+              }
+            });
+          }
+        } catch (e) {
+          console.error("Error processing order items:", e);
+        }
+      });
+      
+      // Sort products by sales count
+      const sortedProducts = [...productSalesCount.entries()]
+        .sort((a, b) => b[1] - a[1]);
+      
+      // Get top 20% of products or at least top 10 products
+      const totalProducts = sortedProducts.length;
+      const topProductsCount = Math.max(
+        Math.ceil(totalProducts * 0.2), // 20% of total products
+        Math.min(10, totalProducts)     // At least 10 or all if fewer
+      );
+      
+      const topSellingProductIds = sortedProducts
+        .slice(0, topProductsCount)
+        .map(entry => entry[0]);
+      
+      // Reset all bestseller flags
+      await db.update(products)
+        .set({ isBestSeller: false })
+        .where(neq(products.id, -1)); // Update all products
+      
+      // Set bestseller flag for top selling products
+      if (topSellingProductIds.length > 0) {
+        await db.update(products)
+          .set({ isBestSeller: true })
+          .where(inArray(products.id, topSellingProductIds));
+      }
+    } catch (error) {
+      console.error("Error updating bestseller products:", error);
+    }
   }
 
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
