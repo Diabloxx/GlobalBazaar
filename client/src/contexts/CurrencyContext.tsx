@@ -7,6 +7,7 @@ interface CurrencyContextType {
   currencies: Currency[];
   setCurrency: (currency: Currency) => void;
   convertPrice: (price: number) => number;
+  formatPrice: (price: number) => string;
   isLoading: boolean;
 }
 
@@ -104,11 +105,18 @@ export const CurrencyProvider = ({ children }: CurrencyProviderProps) => {
     });
   };
 
+  // Format price with currency symbol
+  const formatPrice = (priceInUsd: number): string => {
+    const convertedPrice = convertPrice(priceInUsd);
+    return `${currency.symbol}${convertedPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   const value = {
     currency,
     currencies,
     setCurrency: handleSetCurrency,
     convertPrice,
+    formatPrice,
     isLoading
   };
 

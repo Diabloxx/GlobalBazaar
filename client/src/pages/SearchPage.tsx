@@ -160,10 +160,10 @@ const SearchPage = () => {
           />
           <div className="flex items-center justify-between mt-2">
             <div className="bg-muted p-2 rounded text-sm">
-              {formatPrice(priceRange[0])}
+              {convertPrice(priceRange[0]).toFixed(2)}
             </div>
             <div className="bg-muted p-2 rounded text-sm">
-              {formatPrice(priceRange[1])}
+              {convertPrice(priceRange[1]).toFixed(2)}
             </div>
           </div>
         </div>
@@ -174,7 +174,7 @@ const SearchPage = () => {
       <FilterSection title="Categories">
         <ScrollArea className="h-[180px] pr-4">
           <div className="space-y-2">
-            {categories.map((category) => (
+            {categories.map((category: { id: number; name: string }) => (
               <div key={category.id} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`category-${category.id}`} 
