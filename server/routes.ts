@@ -1630,9 +1630,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? [updatedOrder.items] 
             : JSON.parse(updatedOrder.items as unknown as string);
         
-        // This is a simplified version - in a real app, you'd process payouts for each seller
-        // based on their items in the order, minus platform fees
-        console.log(`Order ${orderId} processed for payment. Items:`, items);
+        // Group items by seller
+        const sellerItems = new Map();
+        let totalProcessed = 0;
+        
+        for (const item of items) {
+          if (!item.sellerId) continue;
+          
+          const itemTotal = item.price * item.quantity;
+          totalProcessed += itemTotal;
+          
+          // Calculate platform fee (20% commission)
+          const platformFee = calculatePlatformFee(itemTotal);
+          const sellerAmount = itemTotal - platformFee;
+          
+          if (!sellerItems.has(item.sellerId)) {
+            sellerItems.set(item.sellerId, {
+              totalAmount: 0,
+              platformFee: 0,
+              sellerAmount: 0,
+              items: []
+            });
+          }
+          
+          const sellerData = sellerItems.get(item.sellerId);
+          sellerData.totalAmount += itemTotal;
+          sellerData.platformFee += platformFee;
+          sellerData.sellerAmount += sellerAmount;
+          sellerData.items.push(item);
+        }
+        
+        // Process payouts for each seller
+        for (const [sellerId, data] of sellerItems.entries()) {
+          // In a production app, this would be an asynchronous job
+          console.log(`Processing payout for seller ${sellerId}:`);
+          console.log(`- Total sales: $${data.totalAmount.toFixed(2)}`);
+          console.log(`- Platform fee (20%): $${data.platformFee.toFixed(2)}`);
+          console.log(`- Seller payout: $${data.sellerAmount.toFixed(2)}`);
+          
+          // For demo purposes, we'll just log the payout details
+          // In a real app, we would call processPayout() with Stripe Connect
+          // await processPayout(sellerId, data.sellerAmount, updatedOrder.currency);
+        }
+        
+        console.log(`Order ${orderId} processed for payment. Total: $${totalProcessed.toFixed(2)}`);
       }
       
       res.json({ 

@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { FaCreditCard, FaPaypal } from 'react-icons/fa';
+import { FaCreditCard } from 'react-icons/fa';
 import { SiApplepay, SiGooglepay } from 'react-icons/si';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import StripeCheckout from './StripeCheckout';
 
-export type PaymentMethod = 'stripe' | 'paypal' | 'applepay' | 'googlepay' | 'bank_transfer';
+export type PaymentMethod = 'stripe' | 'applepay' | 'googlepay';
 
 interface PaymentMethodSelectorProps {
   amount: number;
@@ -54,14 +53,10 @@ export default function PaymentMethodSelector({
     switch (method) {
       case 'stripe':
         return <FaCreditCard className="h-5 w-5" />;
-      case 'paypal':
-        return <FaPaypal className="h-5 w-5 text-[#003087]" />;
       case 'applepay':
         return <SiApplepay className="h-5 w-5" />;
       case 'googlepay':
         return <SiGooglepay className="h-5 w-5" />;
-      case 'bank_transfer':
-        return <FaCreditCard className="h-5 w-5" />;
       default:
         return <FaCreditCard className="h-5 w-5" />;
     }
@@ -71,14 +66,10 @@ export default function PaymentMethodSelector({
     switch (method) {
       case 'stripe':
         return 'Credit / Debit Card';
-      case 'paypal':
-        return 'PayPal';
       case 'applepay':
         return 'Apple Pay';
       case 'googlepay':
         return 'Google Pay';
-      case 'bank_transfer':
-        return 'Bank Transfer';
       default:
         return method;
     }

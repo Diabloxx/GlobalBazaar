@@ -43,9 +43,7 @@ const CheckoutForm = ({ clientSecret, amount, onSuccess, currency = 'USD' }: Che
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/order-confirmation`,
-        // Use redirect mode only if you don't want to handle the payment confirmation yourself
-        // Remove this line to handle payment confirmation in this component
+        return_url: `${window.location.origin}/orders`,
       },
       redirect: 'if_required',
     });
