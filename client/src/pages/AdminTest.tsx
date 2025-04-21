@@ -207,6 +207,74 @@ const AdminTest = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {!user && (
+            <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-800 mb-4">
+              <h3 className="text-lg font-medium mb-4 flex items-center">
+                <LogIn className="mr-2 h-5 w-5 text-primary" />
+                Login Required
+              </h3>
+              <form onSubmit={handleManualLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    Username
+                  </Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    value={loginForm.username}
+                    onChange={handleInputChange}
+                    placeholder="Enter your username"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="flex items-center">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={handleInputChange}
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+                <div className="pt-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Logging in...</>
+                    ) : (
+                      <><LogIn className="mr-2 h-4 w-4" /> Login</>
+                    )}
+                  </Button>
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setLoginForm({
+                        username: 'demo',
+                        password: 'password'
+                      });
+                    }}
+                    className="underline hover:text-primary"
+                  >
+                    Use demo account
+                  </button>
+                  <span>Administrator Test Tool</span>
+                </div>
+              </form>
+            </div>
+          )}
+          
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <h3 className="text-lg font-medium mb-2">Local User State</h3>
@@ -241,41 +309,47 @@ const AdminTest = () => {
             Refresh User
           </Button>
           
-          <Button 
-            onClick={loginAsUser}
-            disabled={isLoading}
-            variant="outline"
-          >
-            <LogIn className="mr-2 h-4 w-4" />
-            Auto Login
-          </Button>
+          {!user && (
+            <Button 
+              onClick={loginAsUser}
+              disabled={isLoading}
+              variant="outline"
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              Auto Login
+            </Button>
+          )}
           
-          <Button 
-            onClick={getUserDebugInfo}
-            disabled={isLoading}
-            variant="outline"
-          >
-            <Database className="mr-2 h-4 w-4" />
-            Get Debug Info
-          </Button>
-          
-          <Button 
-            onClick={setUserAsAdmin}
-            disabled={isLoading}
-            variant="outline"
-          >
-            <Shield className="mr-2 h-4 w-4" />
-            Set as Admin (API)
-          </Button>
-          
-          <Button 
-            onClick={setUserRoleDirectly}
-            disabled={isLoading}
-            variant="default"
-          >
-            <UserCog className="mr-2 h-4 w-4" />
-            Update Role (Direct)
-          </Button>
+          {user && (
+            <>
+              <Button 
+                onClick={getUserDebugInfo}
+                disabled={isLoading}
+                variant="outline"
+              >
+                <Database className="mr-2 h-4 w-4" />
+                Get Debug Info
+              </Button>
+              
+              <Button 
+                onClick={setUserAsAdmin}
+                disabled={isLoading}
+                variant="outline"
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Set as Admin (API)
+              </Button>
+              
+              <Button 
+                onClick={setUserRoleDirectly}
+                disabled={isLoading}
+                variant="default"
+              >
+                <UserCog className="mr-2 h-4 w-4" />
+                Update Role (Direct)
+              </Button>
+            </>
+          )}
         </CardFooter>
       </Card>
     </div>
