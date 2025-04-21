@@ -1593,7 +1593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // AI-powered product recommendation
+  // AI-powered product recommendation (using fallback mechanism only)
   app.post("/api/ai/recommend", async (req, res) => {
     try {
       const { query, userPreferences, priceRange, categoryId, browsedProducts } = req.body;
@@ -1605,39 +1605,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all products to match against
       const allProducts = await storage.getProducts();
       
-      // Import dynamically to avoid loading OpenAI if not needed
-      const { getProductRecommendations, analyzeUserInterests } = await import("./openai");
+      // Import only the fallback function we need to avoid OpenAI API quota issues
+      const { getFallbackRecommendations } = await import("./openai");
       
-      // First, analyze the user's message to understand their interests
-      const analysis = await analyzeUserInterests(query);
+      console.log(`Getting keyword-based recommendations for query: "${query}"`);
       
-      // Then get recommendations based on the analysis
-      const recommendations = await getProductRecommendations(
-        {
-          query,
-          userPreferences: userPreferences || analysis.interests || [],
-          priceRange: priceRange || analysis.priceRange,
-          categoryId,
-          browsedProducts
-        },
-        allProducts
+      // Use only our keyword-based recommendation system to avoid OpenAI API quota issues
+      const recommendations = getFallbackRecommendations(
+        query,
+        allProducts,
+        categoryId
       );
       
       // Get the actual product objects for recommended product IDs
-      const recommendedProducts = recommendations.recommendedProducts
-        .map(id => allProducts.find(p => p.id === id))
-        .filter(Boolean);
+      const recommendedProducts = [];
+      for (const productId of recommendations.recommendedProducts) {
+        const product = await storage.getProduct(productId);
+        if (product) {
+          recommendedProducts.push(product);
+        }
+      }
+      
+      // If we still don't have enough recommendations, add bestsellers
+      if (recommendedProducts.length < 4) {
+        const bestsellers = await storage.getBestsellerProducts();
+        const needed = 4 - recommendedProducts.length;
+        
+        // Add bestsellers that aren't already in the recommendations
+        for (const product of bestsellers) {
+          if (!recommendedProducts.some(p => p.id === product.id)) {
+            recommendedProducts.push(product);
+            if (recommendedProducts.length >= 4) break;
+          }
+        }
+      }
       
       res.json({
         message: recommendations.message,
         products: recommendedProducts
       });
     } catch (error) {
-      console.error("AI recommendation error:", error);
-      res.status(500).json({ 
-        message: "Failed to get AI recommendations",
-        error: error.message 
-      });
+      console.error("Recommendation error:", error);
+      
+      // Even if the primary recommendation logic fails, still try to return something useful
+      try {
+        const bestsellers = await storage.getBestsellerProducts();
+        res.json({
+          message: "Here are some of our best products you might be interested in",
+          products: bestsellers.slice(0, 4)
+        });
+      } catch (fallbackError) {
+        res.status(500).json({ 
+          message: "Failed to get recommendations",
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
   });
   
@@ -2063,14 +2085,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("AI recommendation error:", error);
-      // Even if the whole endpoint fails, return at least bestsellers
+      // Even if the whole endpoint fails, still provide recommendations
       try {
-        const bestsellers = await storage.getBestsellerProducts();
-        res.json({
-          products: bestsellers.slice(0, 4),
-          message: "Here are some popular products you might like"
-        });
+        // First try using our keyword-based recommendation engine directly
+        const allProducts = await storage.getProducts();
+        const fallbackRecs = getFallbackRecommendations(query, allProducts, categoryId);
+        
+        // Get the actual product objects for the recommended IDs
+        const recommendedProducts = [];
+        for (const productId of fallbackRecs.recommendedProducts) {
+          const product = await storage.getProduct(productId);
+          if (product) {
+            recommendedProducts.push(product);
+          }
+        }
+        
+        // If we still couldn't get recommendations, use bestsellers as a final resort
+        if (recommendedProducts.length === 0) {
+          const bestsellers = await storage.getBestsellerProducts();
+          res.json({
+            products: bestsellers.slice(0, 4),
+            message: "Here are some popular products you might like"
+          });
+        } else {
+          // Return our keyword-based recommendations
+          res.json({
+            products: recommendedProducts,
+            message: fallbackRecs.message
+          });
+        }
       } catch (fallbackError) {
+        // Last resort - truly nothing worked
         res.status(500).json({ 
           message: "Failed to get recommendations",
           error: error instanceof Error ? error.message : "Unknown error"
