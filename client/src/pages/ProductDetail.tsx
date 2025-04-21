@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/currency';
 import { 
   Star,
@@ -25,7 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { WishlistItem, Product } from '@shared/schema';
+import ProductReviewForm from '@/components/ProductReviewForm';
+import ReviewList from '@/components/ReviewList';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -459,52 +462,21 @@ const ProductDetail = () => {
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-              <div className="flex items-center mb-6">
-                <div className="mr-4">
-                  <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">{product.rating}</div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm">out of 5</div>
-                </div>
-                <div className="flex-1">
-                  {renderRatingStars(product.rating || 0)}
-                  <div className="text-gray-500 dark:text-gray-400 text-sm mt-1">{product.reviewCount} reviews</div>
-                </div>
-              </div>
+              {/* Reviews list */}
+              <ReviewList productId={product.id} />
               
-              <div className="space-y-4">
-                {/* This is just placeholder data since we don't have actual reviews in our schema */}
-                <div className="border-b border-gray-200 pb-4">
-                  <div className="flex items-center mb-2">
-                    <div className="font-medium text-gray-800 dark:text-gray-200">John D.</div>
-                    <div className="text-gray-500 dark:text-gray-400 text-sm ml-2">Verified Purchase</div>
-                  </div>
-                  <div className="flex text-yellow-400 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">Great product! Exactly as described and fast shipping.</p>
-                </div>
-                
-                <div className="border-b border-gray-200 pb-4">
-                  <div className="flex items-center mb-2">
-                    <div className="font-medium text-gray-800 dark:text-gray-200">Sarah M.</div>
-                    <div className="text-gray-500 dark:text-gray-400 text-sm ml-2">Verified Purchase</div>
-                  </div>
-                  <div className="flex text-yellow-400 mb-2">
-                    {[...Array(4)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                    {[...Array(1)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-gray-300" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">Good quality but a little smaller than I expected.</p>
-                </div>
-              </div>
+              {/* Separator */}
+              <Separator className="my-8" />
               
-              <Button className="mt-6 bg-primary hover:bg-primary/90 text-white">
-                Write a Review
-              </Button>
+              {/* Review form */}
+              <ProductReviewForm 
+                productId={product.id} 
+                onReviewSubmitted={() => {
+                  // Invalidate both reviews query and product query (to update review count and rating)
+                  queryClient.invalidateQueries({ queryKey: [`/api/products/${product.id}/reviews`] });
+                  queryClient.invalidateQueries({ queryKey: [`/api/products/${slug}`] });
+                }}
+              />
             </div>
           </TabsContent>
         </Tabs>
