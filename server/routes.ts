@@ -1619,6 +1619,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete product" });
     }
   });
+  
+  // ===== Seller Tutorial Routes =====
+  
+  // Get all tutorial steps
+  app.get("/api/tutorial/steps", async (req, res) => {
+    try {
+      const steps = await storage.getTutorialSteps();
+      res.json(steps);
+    } catch (error) {
+      console.error("Error fetching tutorial steps:", error);
+      res.status(500).json({ message: "Failed to fetch tutorial steps" });
+    }
+  });
+  
+  // Get tutorial steps by category
+  app.get("/api/tutorial/steps/category/:category", async (req, res) => {
+    try {
+      const { category } = req.params;
+      const steps = await storage.getTutorialStepsByCategory(category);
+      res.json(steps);
+    } catch (error) {
+      console.error("Error fetching tutorial steps by category:", error);
+      res.status(500).json({ message: "Failed to fetch tutorial steps" });
+    }
+  });
+  
+  // Get a specific tutorial step
+  app.get("/api/tutorial/steps/:id", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.id);
+      if (isNaN(stepId)) {
+        return res.status(400).json({ message: "Invalid step ID" });
+      }
+      
+      const step = await storage.getTutorialStep(stepId);
+      if (!step) {
+        return res.status(404).json({ message: "Tutorial step not found" });
+      }
+      
+      res.json(step);
+    } catch (error) {
+      console.error("Error fetching tutorial step:", error);
+      res.status(500).json({ message: "Failed to fetch tutorial step" });
+    }
+  });
+  
+  // Admin: Create a new tutorial step
+  app.post("/api/admin/tutorial/steps", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const stepData = insertSellerTutorialStepSchema.parse(req.body);
+      
+      const newStep = await storage.createTutorialStep(stepData);
+      res.status(201).json(newStep);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid step data", errors: error.errors });
+      } else {
+        console.error("Error creating tutorial step:", error);
+        res.status(500).json({ message: "Failed to create tutorial step" });
+      }
+    }
+  });
+  
+  // Admin: Update a tutorial step
+  app.patch("/api/admin/tutorial/steps/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.id);
+      if (isNaN(stepId)) {
+        return res.status(400).json({ message: "Invalid step ID" });
+      }
+      
+      // Get the existing step to make sure it exists
+      const existingStep = await storage.getTutorialStep(stepId);
+      if (!existingStep) {
+        return res.status(404).json({ message: "Tutorial step not found" });
+      }
+      
+      // Validate the update data
+      const updateData = req.body;
+      
+      // Update the step
+      const updatedStep = await storage.updateTutorialStep(stepId, updateData);
+      res.json(updatedStep);
+    } catch (error) {
+      console.error("Error updating tutorial step:", error);
+      res.status(500).json({ message: "Failed to update tutorial step" });
+    }
+  });
+  
+  // Admin: Delete a tutorial step
+  app.delete("/api/admin/tutorial/steps/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.id);
+      if (isNaN(stepId)) {
+        return res.status(400).json({ message: "Invalid step ID" });
+      }
+      
+      const success = await storage.deleteTutorialStep(stepId);
+      
+      if (success) {
+        res.json({ message: "Tutorial step deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Tutorial step not found or could not be deleted" });
+      }
+    } catch (error) {
+      console.error("Error deleting tutorial step:", error);
+      res.status(500).json({ message: "Failed to delete tutorial step" });
+    }
+  });
+  
+  // Get tutorial progress for the current user
+  app.get("/api/seller/tutorial/progress", isAuthenticated, isSeller, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const progress = await storage.getUserTutorialProgress(userId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching tutorial progress:", error);
+      res.status(500).json({ message: "Failed to fetch tutorial progress" });
+    }
+  });
+  
+  // Mark a tutorial step as completed
+  app.post("/api/seller/tutorial/progress/:stepId/complete", isAuthenticated, isSeller, async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      if (isNaN(stepId)) {
+        return res.status(400).json({ message: "Invalid step ID" });
+      }
+      
+      const userId = req.user.id;
+      
+      // Get the step to make sure it exists
+      const step = await storage.getTutorialStep(stepId);
+      if (!step) {
+        return res.status(404).json({ message: "Tutorial step not found" });
+      }
+      
+      // Get optional notes from the request body
+      const { notes } = req.body;
+      
+      // Mark the step as completed
+      const progress = await storage.markTutorialStepCompleted(userId, stepId, notes);
+      
+      // Record this activity
+      await storage.createUserActivity({
+        userId,
+        sessionId: req.sessionID,
+        activityType: "tutorial_step_completed",
+        details: { stepId, stepTitle: step.title }
+      });
+      
+      res.json(progress);
+    } catch (error) {
+      console.error("Error completing tutorial step:", error);
+      res.status(500).json({ message: "Failed to complete tutorial step" });
+    }
+  });
+  
+  // Reset tutorial progress for the current user
+  app.delete("/api/seller/tutorial/progress", isAuthenticated, isSeller, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const success = await storage.resetUserTutorialProgress(userId);
+      
+      if (success) {
+        res.json({ message: "Tutorial progress reset successfully" });
+      } else {
+        res.status(404).json({ message: "No tutorial progress found to reset" });
+      }
+    } catch (error) {
+      console.error("Error resetting tutorial progress:", error);
+      res.status(500).json({ message: "Failed to reset tutorial progress" });
+    }
+  });
 
   // Seller API - Update order status
   app.patch("/api/seller/orders/:id/status", isAuthenticated, isSeller, async (req, res) => {

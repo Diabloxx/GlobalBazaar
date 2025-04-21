@@ -7,6 +7,7 @@ import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WelcomeProvider } from "./contexts/WelcomeContext";
+import { TutorialProvider } from "./contexts/TutorialContext";
 import { ThemeProvider } from "next-themes";
 
 import NotFound from "@/pages/not-found";
@@ -25,6 +26,7 @@ import CustomerService from "@/pages/CustomerService";
 import About from "@/pages/About";
 import AdminTest from "@/pages/AdminTest";
 import SearchPage from "@/pages/SearchPage";
+import SellerTutorial from "@/pages/SellerTutorial";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
@@ -43,6 +45,7 @@ function Router() {
       <Route path="/wishlist" component={Wishlist} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/seller" component={SellerDashboard} />
+      <Route path="/seller/tutorial" component={SellerTutorial} />
       <Route path="/become-seller" component={BecomeSeller} />
       <Route path="/sale" component={CategoryProducts} />
       <Route path="/new-arrivals" component={CategoryProducts} />
@@ -65,16 +68,18 @@ function App() {
             <CurrencyProvider>
               <CartProvider>
                 <WelcomeProvider>
-                  <div className="flex flex-col min-h-screen">
-                    <Header />
-                    <main className="flex-grow">
-                      <Router />
-                    </main>
-                    <Footer />
-                    <CartSidebar />
-                    <AssistantBubble />
-                    <Toaster />
-                  </div>
+                  <TutorialProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Header />
+                      <main className="flex-grow">
+                        <Router />
+                      </main>
+                      <Footer />
+                      <CartSidebar />
+                      <AssistantBubble />
+                      <Toaster />
+                    </div>
+                  </TutorialProvider>
                 </WelcomeProvider>
               </CartProvider>
             </CurrencyProvider>
