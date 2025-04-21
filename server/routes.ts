@@ -656,9 +656,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin API - Create a product
-  app.post("/api/admin/products", async (req, res) => {
+  app.post("/api/admin/products", isAdmin, async (req, res) => {
     try {
-      // In a production app, we would check if the requester is an admin here
+      console.log("Admin create product request:", req.body);
+      
+      // Check for the required category
+      if (!req.body.categoryId) {
+        return res.status(400).json({ message: "Category ID is required" });
+      }
+      
+      // Verify category exists
+      const category = await storage.getCategory(req.body.categoryId);
+      if (!category) {
+        return res.status(400).json({ message: "Category not found" });
+      }
       
       const productData = insertProductSchema.parse(req.body);
       
@@ -670,21 +681,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/(^-|-$)/g, '');
       }
       
+      console.log("Creating product with data:", productData);
       const product = await storage.createProduct(productData);
+      console.log("Product created successfully:", product);
+      
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
         return res.status(400).json({ message: "Invalid product data", errors: error.errors });
       }
       console.error("Admin create product error:", error);
-      res.status(500).json({ message: "Failed to create product" });
+      res.status(500).json({ 
+        message: "Failed to create product", 
+        error: error.message || "Unknown error" 
+      });
     }
   });
   
   // Admin API - Update a product
-  app.patch("/api/admin/products/:id", async (req, res) => {
+  app.patch("/api/admin/products/:id", isAdmin, async (req, res) => {
     try {
-      // In a production app, we would check if the requester is an admin here
+      console.log("Admin update product request:", req.body);
       
       const productId = parseInt(req.params.id);
       if (isNaN(productId)) {
@@ -712,18 +730,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedProduct);
     } catch (error) {
       console.error("Admin update product error:", error);
-      res.status(500).json({ message: "Failed to update product" });
+      res.status(500).json({ 
+        message: "Failed to update product", 
+        error: error.message || "Unknown error" 
+      });
     }
   });
   
   // Admin API - Delete a product
-  app.delete("/api/admin/products/:id", async (req, res) => {
+  app.delete("/api/admin/products/:id", isAdmin, async (req, res) => {
     try {
-      // In a production app, we would check if the requester is an admin here
+      console.log("Admin delete product request:", req.params.id);
       
       const productId = parseInt(req.params.id);
       if (isNaN(productId)) {
         return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Verify product exists first
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
       }
       
       // Delete product
@@ -732,10 +759,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
       
-      res.json({ success: true });
+      console.log("Product deleted successfully:", productId);
+      res.json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
       console.error("Admin delete product error:", error);
-      res.status(500).json({ message: "Failed to delete product" });
+      res.status(500).json({ 
+        message: "Failed to delete product", 
+        error: error.message || "Unknown error" 
+      });
     }
   });
   
@@ -895,10 +926,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seller API - Create a product
   app.post("/api/seller/products", isAuthenticated, isSeller, async (req, res) => {
     try {
+      console.log("Seller create product request:", req.body);
+      
+      // Check for the required category
+      if (!req.body.categoryId) {
+        return res.status(400).json({ message: "Category ID is required" });
+      }
+      
+      // Verify category exists
+      const category = await storage.getCategory(req.body.categoryId);
+      if (!category) {
+        return res.status(400).json({ message: "Category not found" });
+      }
+      
+      // Parse and validate data
       const productData = insertProductSchema.parse(req.body);
       
       // Automatically set the seller ID to the current user
-      productData.sellerId = req.user.id;
+      productData.sellerId = req.user?.id;
       
       // Generate a slug from the product name if not provided
       if (!productData.slug) {
@@ -908,14 +953,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/(^-|-$)/g, '');
       }
       
+      console.log("Creating product with data:", productData);
       const product = await storage.createProduct(productData);
+      console.log("Product created successfully:", product);
+      
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.errors);
         return res.status(400).json({ message: "Invalid product data", errors: error.errors });
       }
       console.error("Seller create product error:", error);
-      res.status(500).json({ message: "Failed to create product" });
+      res.status(500).json({ 
+        message: "Failed to create product", 
+        error: error.message || "Unknown error" 
+      });
     }
   });
 
