@@ -290,6 +290,48 @@ export type InsertSellerReview = z.infer<typeof insertSellerReviewSchema>;
 export type ProductReview = typeof productReviews.$inferSelect;
 export type InsertProductReview = z.infer<typeof insertProductReviewSchema>;
 
+// User Activity table to track behavior
+export const userActivity = pgTable("user_activity", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  activityType: text("activity_type").notNull(), // "view_product", "add_to_cart", "search", etc.
+  details: jsonb("details").notNull(), // { productId, searchQuery, etc. }
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserActivitySchema = createInsertSchema(userActivity).omit({
+  id: true,
+  createdAt: true,
+});
+
+// User Activity relations
+export const userActivityRelations = relations(userActivity, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivity.userId],
+    references: [users.id],
+  }),
+}));
+
+// Update User relations to include activity
+export const usersRelationsExtended = relations(users, ({ many }) => ({
+  cartItems: many(cartItems),
+  orders: many(orders),
+  wishlistItems: many(wishlistItems),
+  sentMessages: many(messages, { relationName: "sender" }),
+  receivedMessages: many(messages, { relationName: "recipient" }),
+  givenReviews: many(sellerReviews, { relationName: "customer" }),
+  receivedReviews: many(sellerReviews, { relationName: "seller" }),
+  products: many(products, { relationName: "seller" }),
+  productReviews: many(productReviews),
+  activity: many(userActivity),
+}));
+
+export type UserActivity = typeof userActivity.$inferSelect;
+export type InsertUserActivity = z.infer<typeof insertUserActivitySchema>;
+
 // The schema for currency data (not stored in database)
 export const currencySchema = z.object({
   code: z.string(),
