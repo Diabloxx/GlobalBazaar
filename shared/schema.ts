@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   address: text("address"),
   phone: text("phone"),
   role: text("role").default("customer"),
+  isVerifiedSeller: boolean("is_verified_seller").default(false),
+  salesCount: integer("sales_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -107,17 +109,78 @@ export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
   createdAt: true,
 });
 
-// Relations
+// Messages table
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull(),
+  recipientId: integer("recipient_id").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Seller Reviews table
+export const sellerReviews = pgTable("seller_reviews", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull(),
+  customerId: integer("customer_id").notNull(),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSellerReviewSchema = createInsertSchema(sellerReviews).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Message relations
+export const messagesRelations = relations(messages, ({ one }) => ({
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+  }),
+  recipient: one(users, {
+    fields: [messages.recipientId],
+    references: [users.id],
+  }),
+}));
+
+// Seller Reviews relations
+export const sellerReviewsRelations = relations(sellerReviews, ({ one }) => ({
+  seller: one(users, {
+    fields: [sellerReviews.sellerId],
+    references: [users.id],
+  }),
+  customer: one(users, {
+    fields: [sellerReviews.customerId],
+    references: [users.id],
+  }),
+}));
+
+// User relations
 export const usersRelations = relations(users, ({ many }) => ({
   cartItems: many(cartItems),
   orders: many(orders),
-  wishlistItems: many(wishlistItems)
+  wishlistItems: many(wishlistItems),
+  sentMessages: many(messages, { relationName: "sender" }),
+  receivedMessages: many(messages, { relationName: "recipient" }),
+  givenReviews: many(sellerReviews, { relationName: "customer" }),
+  receivedReviews: many(sellerReviews, { relationName: "seller" }),
+  products: many(products, { relationName: "seller" })
 }));
 
+// Category relations
 export const categoriesRelations = relations(categories, ({ many }) => ({
   products: many(products)
 }));
 
+// Product relations
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
@@ -131,6 +194,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   wishlistItems: many(wishlistItems)
 }));
 
+// CartItem relations
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   user: one(users, {
     fields: [cartItems.userId],
@@ -142,6 +206,7 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   })
 }));
 
+// Order relations
 export const ordersRelations = relations(orders, ({ one }) => ({
   user: one(users, {
     fields: [orders.userId],
@@ -149,6 +214,7 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   })
 }));
 
+// WishlistItem relations
 export const wishlistItemsRelations = relations(wishlistItems, ({ one }) => ({
   user: one(users, {
     fields: [wishlistItems.userId],
@@ -178,6 +244,12 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type WishlistItem = typeof wishlistItems.$inferSelect;
 export type InsertWishlistItem = z.infer<typeof insertWishlistItemSchema>;
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type SellerReview = typeof sellerReviews.$inferSelect;
+export type InsertSellerReview = z.infer<typeof insertSellerReviewSchema>;
 
 // The schema for currency data (not stored in database)
 export const currencySchema = z.object({
