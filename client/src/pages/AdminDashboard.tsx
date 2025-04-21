@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
-import { Order } from '@shared/schema';
+import { Order, Product } from '@shared/schema';
 import { 
   Users, 
   ShoppingBag, 
@@ -40,14 +40,23 @@ import {
   BarChart3, 
   DollarSign,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  PlusCircle,
+  Edit,
+  Trash,
+  Search
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { ProductForm } from '@/components/ProductForm';
+import { Input } from '@/components/ui/input';
 
 const AdminDashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Check if user is admin, if not redirect to home
   useEffect(() => {
@@ -106,6 +115,16 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Product Form */}
+      {isProductFormOpen && (
+        <ProductForm
+          isOpen={isProductFormOpen}
+          onClose={() => setIsProductFormOpen(false)}
+          product={selectedProduct}
+          isAdmin={true}
+        />
+      )}
+      
       <div className="flex flex-col space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -362,7 +381,11 @@ const AdminDashboard = () => {
                   <CardTitle>Products Management</CardTitle>
                   <CardDescription>Manage all your products</CardDescription>
                 </div>
-                <Button>
+                <Button onClick={() => {
+                  setSelectedProduct(undefined);
+                  setIsProductFormOpen(true);
+                }}>
+                  <PlusCircle className="h-4 w-4 mr-2" />
                   Add New Product
                 </Button>
               </CardHeader>
@@ -408,8 +431,19 @@ const AdminDashboard = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="flex space-x-2">
-                            <Button variant="outline" size="sm">Edit</Button>
-                            <Button variant="destructive" size="sm">Delete</Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setIsProductFormOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-1" /> Edit
+                            </Button>
+                            <Button variant="destructive" size="sm">
+                              <Trash className="h-4 w-4 mr-1" /> Delete
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -425,9 +459,15 @@ const AdminDashboard = () => {
           {/* Users Tab */}
           <TabsContent value="users">
             <Card>
-              <CardHeader>
-                <CardTitle>Users Management</CardTitle>
-                <CardDescription>Manage all your users and roles</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Users Management</CardTitle>
+                  <CardDescription>Manage all your users and roles</CardDescription>
+                </div>
+                <Button>
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add User
+                </Button>
               </CardHeader>
               <CardContent>
                 {usersLoading ? (
