@@ -167,18 +167,44 @@ const SellerDashboard = () => {
     enabled: isAuthenticated && (user?.role === 'seller' || user?.role === 'admin'),
     queryFn: async ({ queryKey }) => {
       try {
+        console.log("Fetching seller products with auth state:", { 
+          isAuthenticated, 
+          userRole: user?.role,
+          userId: user?.id 
+        });
+        
         const response = await fetch(queryKey[0] as string, {
           credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
         });
         
         if (!response.ok) {
           console.error('Error fetching seller products:', response.status, response.statusText);
+          
+          // Log more details about the error
+          const errorText = await response.text();
+          console.error('Error response body:', errorText);
+          
+          // For unauthorized errors, it might be an auth issue
+          if (response.status === 401) {
+            console.log("Authentication issue detected. User session may have expired.");
+            // Return empty array but don't throw - we'll handle this gracefully
+          }
+          
           return [];
         }
         
         const text = await response.text();
+        if (!text.trim()) {
+          console.log('Empty response received from server');
+          return [];
+        }
+        
         try {
           const json = JSON.parse(text);
+          console.log("Successfully parsed products response:", Array.isArray(json) ? `Array with ${json.length} items` : typeof json);
           return Array.isArray(json) ? json : [];
         } catch (parseError) {
           console.error('JSON parse error in products:', parseError, 'Response text:', text);
