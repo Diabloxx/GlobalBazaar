@@ -6,7 +6,8 @@ import {
   orders, type Order, type InsertOrder,
   wishlistItems, type WishlistItem, type InsertWishlistItem,
   Currency, currencySchema,
-  productReviews, type ProductReview, type InsertProductReview
+  productReviews, type ProductReview, type InsertProductReview,
+  userActivity, type UserActivity, type InsertUserActivity
 } from "@shared/schema";
 import { db } from "./db";
 import { 
@@ -107,6 +108,7 @@ export class MemStorage implements IStorage {
   private orders: Map<number, Order>;
   private wishlistItems: Map<number, WishlistItem>;
   private productReviews: Map<number, ProductReview>;
+  private userActivities: Map<number, UserActivity>;
   private currencies: Currency[];
   
   private userIdCounter: number;
@@ -116,6 +118,7 @@ export class MemStorage implements IStorage {
   private orderIdCounter: number;
   private wishlistItemIdCounter: number;
   private productReviewIdCounter: number;
+  private userActivityIdCounter: number;
   
   constructor() {
     this.users = new Map();
@@ -125,6 +128,7 @@ export class MemStorage implements IStorage {
     this.orders = new Map();
     this.wishlistItems = new Map();
     this.productReviews = new Map();
+    this.userActivities = new Map();
     
     this.userIdCounter = 1;
     this.categoryIdCounter = 1;
@@ -133,6 +137,7 @@ export class MemStorage implements IStorage {
     this.orderIdCounter = 1;
     this.wishlistItemIdCounter = 1;
     this.productReviewIdCounter = 1;
+    this.userActivityIdCounter = 1;
     
     // Add some default currencies
     this.currencies = [
@@ -676,6 +681,72 @@ export class MemStorage implements IStorage {
     
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     return totalRating / reviews.length;
+  }
+  
+  // User Activity Tracking methods
+  async recordUserActivity(activity: InsertUserActivity): Promise<UserActivity> {
+    const id = this.userActivityIdCounter++;
+    const newActivity: UserActivity = { ...activity, id, createdAt: new Date() };
+    this.userActivities.set(id, newActivity);
+    return newActivity;
+  }
+
+  async getUserActivity(userId: number, limit?: number): Promise<UserActivity[]> {
+    const activities = Array.from(this.userActivities.values())
+      .filter(activity => activity.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    return limit ? activities.slice(0, limit) : activities;
+  }
+  
+  async getProductViewHistory(userId: number, limit: number = 10): Promise<number[]> {
+    const activities = Array.from(this.userActivities.values())
+      .filter(
+        activity => 
+          activity.userId === userId && 
+          activity.activityType === 'view_product'
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    // Extract unique product IDs from the view history
+    const productIds = new Set<number>();
+    const result: number[] = [];
+    
+    for (const activity of activities) {
+      const productId = (activity.details as any).productId;
+      if (productId && !productIds.has(productId)) {
+        productIds.add(productId);
+        result.push(productId);
+        if (result.length >= limit) break;
+      }
+    }
+    
+    return result;
+  }
+  
+  async getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {
+    const activities = Array.from(this.userActivities.values())
+      .filter(
+        activity => 
+          activity.userId === userId && 
+          activity.activityType === 'search'
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    // Extract unique search queries
+    const searchQueries = new Set<string>();
+    const result: string[] = [];
+    
+    for (const activity of activities) {
+      const query = (activity.details as any).query;
+      if (query && !searchQueries.has(query)) {
+        searchQueries.add(query);
+        result.push(query);
+        if (result.length >= limit) break;
+      }
+    }
+    
+    return result;
   }
   
   private async updateProductRating(productId: number): Promise<void> {
