@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Check, CreditCard, ShoppingCart } from 'lucide-react';
+import { Loader2, Check, CreditCard, ShoppingCart, Shield } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -445,7 +445,7 @@ const Checkout = () => {
                 
                 <div className="mt-6 text-sm text-gray-500">
                   <p className="flex items-center">
-                    <ShieldCheck className="h-4 w-4 mr-2 text-primary" />
+                    <Shield className="h-4 w-4 mr-2 text-primary" />
                     Secure checkout powered by PayPal
                   </p>
                 </div>

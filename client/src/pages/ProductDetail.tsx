@@ -17,7 +17,7 @@ import {
   Share2,
   Check,
   Truck,
-  ShieldCheck,
+  Shield,
   RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -338,7 +338,7 @@ const ProductDetail = () => {
               </div>
               <div className="flex items-center">
                 <div className="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10 mr-3">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <Shield className="h-5 w-5 text-primary" />
                 </div>
                 <span className="text-sm text-gray-600">Secure checkout</span>
               </div>
