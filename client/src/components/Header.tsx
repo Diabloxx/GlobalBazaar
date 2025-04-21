@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useQuery } from '@tanstack/react-query';
 import { useMediaQuery } from '@/hooks/use-mobile';
+import { Category } from '@shared/schema';
 import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu, 
@@ -22,7 +23,8 @@ import {
   Menu, 
   Search,
   LogIn,
-  LogOut
+  LogOut,
+  Store
 } from 'lucide-react';
 
 const Header = () => {
@@ -30,11 +32,11 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { currency, setCurrency, currencies } = useCurrency();
-  const { isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { cartItems, openCart } = useCart();
   
   // Get categories for navigation
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
 
@@ -186,6 +188,23 @@ const Header = () => {
             <Link href="/bestsellers" className={location === '/bestsellers' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
               Bestsellers
             </Link>
+            
+            {/* Show seller dashboard for sellers and admins */}
+            {user?.role === 'seller' || user?.role === 'admin' ? (
+              <Link href="/seller" className={location === '/seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+                <div className="flex items-center">
+                  <Store className="h-4 w-4 mr-1" />
+                  Seller Dashboard
+                </div>
+              </Link>
+            ) : user ? (
+              <Link href="/become-seller" className={location === '/become-seller' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+                <div className="flex items-center">
+                  <Store className="h-4 w-4 mr-1" />
+                  Become a Seller
+                </div>
+              </Link>
+            ) : null}
           </div>
           
           {/* Mobile Navigation Toggle */}
@@ -207,6 +226,25 @@ const Header = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-200">
           <div className="px-4 py-2">
+            <Link href="/sale" className="block py-2 text-gray-700 font-medium">Sale</Link>
+            <Link href="/new-arrivals" className="block py-2 text-gray-700 font-medium">New Arrivals</Link>
+            <Link href="/bestsellers" className="block py-2 text-gray-700 font-medium">Bestsellers</Link>
+            
+            {/* Seller links for mobile */}
+            {user?.role === 'seller' || user?.role === 'admin' ? (
+              <Link href="/seller" className="block py-2 text-gray-700 font-medium flex items-center">
+                <Store className="h-4 w-4 mr-1" />
+                Seller Dashboard
+              </Link>
+            ) : user ? (
+              <Link href="/become-seller" className="block py-2 text-gray-700 font-medium flex items-center">
+                <Store className="h-4 w-4 mr-1" />
+                Become a Seller
+              </Link>
+            ) : null}
+            
+            <div className="h-px bg-gray-200 my-2"></div>
+            
             {categories.map((category) => (
               <Link 
                 key={category.id}
