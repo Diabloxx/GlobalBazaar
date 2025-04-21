@@ -19,6 +19,8 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User | undefined>;
+  updateStripeAccountId(userId: number, stripeAccountId: string): Promise<User | undefined>;
   
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -310,6 +312,24 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
   
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, stripeCustomerId };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateStripeAccountId(userId: number, stripeAccountId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, stripeAccountId };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
   // Category operations
   async getCategories(): Promise<Category[]> {
     return Array.from(this.categories.values());
@@ -577,6 +597,24 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set(userData)
       .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stripeCustomerId })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+  
+  async updateStripeAccountId(userId: number, stripeAccountId: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stripeAccountId })
+      .where(eq(users.id, userId))
       .returning();
     return updatedUser;
   }

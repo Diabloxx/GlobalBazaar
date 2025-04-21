@@ -15,6 +15,9 @@ export const users = pgTable("users", {
   role: text("role").default("customer"),
   isVerifiedSeller: boolean("is_verified_seller").default(false),
   salesCount: integer("sales_count").default(0),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeAccountId: text("stripe_account_id"),
+  payoutMethod: text("payout_method"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
