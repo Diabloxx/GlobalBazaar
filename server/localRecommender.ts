@@ -189,16 +189,57 @@ class RecommendationEngine {
     // Extract keywords from the query
     const queryKeywords = this.extractKeywords(query);
     
-    // If no keywords, return bestsellers or featured products
+    // If no keywords, return bestsellers or featured products with a smarter fallback strategy
     if (queryKeywords.length === 0) {
-      const featuredIds = products
-        .filter(p => p.featured === true)
+      // First try to get bestseller products
+      let recommendedIds = products
+        .filter(p => p.isBestSeller === true)
         .map(p => p.id)
         .slice(0, limit);
       
+      // If not enough bestsellers, add featured products
+      if (recommendedIds.length < limit) {
+        const featuredIds = products
+          .filter(p => p.featured === true && !recommendedIds.includes(p.id))
+          .map(p => p.id)
+          .slice(0, limit - recommendedIds.length);
+          
+        recommendedIds = [...recommendedIds, ...featuredIds];
+      }
+      
+      // If still not enough, add products on sale
+      if (recommendedIds.length < limit) {
+        const saleIds = products
+          .filter(p => p.isSale === true && !recommendedIds.includes(p.id))
+          .map(p => p.id)
+          .slice(0, limit - recommendedIds.length);
+          
+        recommendedIds = [...recommendedIds, ...saleIds];
+      }
+      
+      // If still not enough, add new products
+      if (recommendedIds.length < limit) {
+        const newIds = products
+          .filter(p => p.isNew === true && !recommendedIds.includes(p.id))
+          .map(p => p.id)
+          .slice(0, limit - recommendedIds.length);
+          
+        recommendedIds = [...recommendedIds, ...newIds];
+      }
+      
+      // Final fallback: just get any products up to the limit
+      if (recommendedIds.length < limit) {
+        const anyIds = products
+          .filter(p => !recommendedIds.includes(p.id))
+          .map(p => p.id)
+          .slice(0, limit - recommendedIds.length);
+          
+        recommendedIds = [...recommendedIds, ...anyIds];
+      }
+      
       return {
-        products: featuredIds,
-        explanation: "Here are some featured products you might like"
+        products: recommendedIds,
+        explanation: "Here are some recommended products for you"
       };
     }
     
@@ -287,6 +328,68 @@ class RecommendationEngine {
       products: recommendedIds,
       explanation: `Here are recommendations based on your search for "${query}"`
     };
+  }
+  
+  // Get similar products for a given product ID
+  public getSimilarProducts(
+    productId: number,
+    products: Product[],
+    limit: number = 5
+  ): number[] {
+    // Get the product
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      console.log(`Product with ID ${productId} not found, returning bestsellers`);
+      return products
+        .filter(p => p.isBestSeller === true)
+        .map(p => p.id)
+        .slice(0, limit);
+    }
+    
+    // Get the keywords for this product
+    const productKeywords = this.productKeywords.get(productId);
+    if (!productKeywords || productKeywords.size === 0) {
+      console.log(`No keywords for product ${productId}, extracting now`);
+      this.extractProductKeywords(product);
+    }
+    
+    // Find similar products by scoring based on shared keywords
+    const similarProducts = products
+      .filter(p => p.id !== productId) // Exclude the current product
+      .map(p => {
+        let score = 0;
+        
+        // Base score on same category
+        if (p.categoryId === product.categoryId) {
+          score += 5;
+        }
+        
+        // Score based on shared keywords
+        const otherProductKeywords = this.productKeywords.get(p.id);
+        if (otherProductKeywords && productKeywords) {
+          productKeywords.forEach((weight, keyword) => {
+            if (otherProductKeywords.has(keyword)) {
+              score += weight * otherProductKeywords.get(keyword)!;
+            }
+          });
+        }
+        
+        // Bonus for similar price range (within 30% of price)
+        const priceDiff = Math.abs(p.price - product.price);
+        const priceRatio = priceDiff / product.price;
+        if (priceRatio < 0.3) {
+          score += 2 * (1 - priceRatio); // Higher score for closer prices
+        }
+        
+        return { id: p.id, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(p => p.id);
+      
+    console.log(`Found ${similarProducts.length} similar products for ${product.name} (ID: ${productId})`);
+    
+    return similarProducts;
   }
   
   // Clear all recommendation data

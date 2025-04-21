@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee, stripe } from "./stripe";
 import { getProductRecommendations, analyzeUserInterests, getFallbackRecommendations } from "./openai";
+import recommender from "./localRecommender";
 import { 
   insertUserSchema, 
   insertCartItemSchema,
@@ -27,6 +28,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket server
   const httpServer = createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Initialize the recommender with all products
+  try {
+    console.log('Initializing local recommendation engine...');
+    const allProducts = await storage.getProducts();
+    recommender.initializeProducts(allProducts);
+    console.log(`Recommendation engine initialized with ${allProducts.length} products`);
+  } catch (error) {
+    console.error('Failed to initialize recommendation engine:', error);
+  }
   
   // All API routes will be prefixed with /api
   
@@ -233,60 +244,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get personalized product recommendations
+  // Get personalized product recommendations using the local recommender
   app.get("/api/products/recommendations", async (req, res) => {
     try {
-      const userId = req.isAuthenticated() ? req.user?.id : null;
+      const userId = req.isAuthenticated() ? req.user?.id : undefined;
+      const sessionId = req.sessionID;
+      const query = req.query.q as string || '';
       
-      if (!userId) {
-        // For anonymous users, return bestsellers
-        const products = await storage.getBestsellerProducts();
-        return res.json(products);
+      // Initialize the recommender with all products
+      const allProducts = await storage.getProducts();
+      recommender.initializeProducts(allProducts);
+      
+      // Get user's view history if available
+      let viewHistory: number[] = [];
+      if (userId) {
+        viewHistory = await storage.getProductViewHistory(userId, 5) || [];
       }
       
-      // Get user's view history
-      const viewHistory = await storage.getProductViewHistory(userId, 5);
+      // Get recommendations using our local recommender
+      let recommendedProducts: number[] = [];
       
-      if (!viewHistory || viewHistory.length === 0) {
-        // If no view history, return bestsellers
-        const products = await storage.getBestsellerProducts();
-        return res.json(products);
-      }
-      
-      // Get categories from view history
-      const viewedProducts = [];
-      const categoryIds = new Set();
-      
-      for (const productId of viewHistory) {
-        const product = await storage.getProduct(productId);
-        if (product) {
-          viewedProducts.push(product);
-          categoryIds.add(product.categoryId);
-        }
-      }
-      
-      // Get similar products from same categories
-      const categoryArr = Array.from(categoryIds);
-      let recommendations = [];
-      
-      for (const categoryId of categoryArr) {
-        const products = await storage.getProductsByCategory(categoryId);
-        recommendations = [...recommendations, ...products];
-      }
-      
-      // Remove duplicates and products user has already viewed
-      const viewedIds = new Set(viewHistory);
-      const uniqueRecommendations = recommendations
-        .filter(product => !viewedIds.has(product.id))
-        .filter((product, index, self) => 
-          index === self.findIndex(p => p.id === product.id)
+      if (query) {
+        // If there's a search query, use it for recommendations
+        console.log(`Getting recommendations based on query: "${query}"`);
+        
+        // Process the query to learn from it
+        recommender.processQuery(query, userId, sessionId);
+        
+        // Get recommendations
+        const { products: recommendedIds } = recommender.getRecommendations(
+          query,
+          allProducts,
+          undefined, // categoryId
+          userId,
+          sessionId,
+          8 // limit
         );
+        
+        recommendedProducts = recommendedIds;
+      } else if (viewHistory.length > 0) {
+        // If user has viewed products, base recommendations on most recent view
+        const recentProductId = viewHistory[0];
+        console.log(`Getting recommendations based on recently viewed product: ${recentProductId}`);
+        
+        // Get similar products for the most recently viewed product
+        recommendedProducts = recommender.getSimilarProducts(recentProductId, allProducts, 8);
+      } else {
+        // Fallback to a mix of featured, bestsellers and new products
+        console.log('No history or query, using fallback recommendations');
+        
+        // Get a mix of featured and bestseller products
+        const featuredProducts = await storage.getFeaturedProducts();
+        const bestsellerProducts = await storage.getBestsellerProducts();
+        const newProducts = await storage.getNewProducts();
+        
+        // Combine and limit to 8
+        const combinedProducts = [
+          ...bestsellerProducts.slice(0, 3),
+          ...featuredProducts.slice(0, 3),
+          ...newProducts.slice(0, 2)
+        ].slice(0, 8);
+        
+        // Extract IDs
+        recommendedProducts = combinedProducts.map(p => p.id);
+      }
       
-      // Limit to 8 recommendations
-      res.json(uniqueRecommendations.slice(0, 8));
+      // Fetch the actual product details for the recommended IDs
+      const productDetails = await Promise.all(
+        recommendedProducts.map(async (id) => await storage.getProduct(id))
+      );
+      
+      // Filter out any undefined results and limit to 8
+      const validProducts = productDetails.filter(Boolean).slice(0, 8);
+      
+      res.json(validProducts);
     } catch (error) {
       console.error("Error fetching recommendations:", error);
       res.status(500).json({ message: "Failed to fetch product recommendations" });
+    }
+  });
+  
+  // Get similar products for a specific product
+  app.get("/api/products/similar/:id", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Get the product
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Get all products for the recommendation engine
+      const allProducts = await storage.getProducts();
+      
+      // Initialize the recommender if needed
+      recommender.initializeProducts(allProducts);
+      
+      // Get similar product IDs
+      const similarProductIds = recommender.getSimilarProducts(productId, allProducts, 6);
+      
+      // Fetch the actual products
+      const similarProducts = await Promise.all(
+        similarProductIds.map(async (id) => await storage.getProduct(id))
+      );
+      
+      // Filter out any undefined results
+      const validSimilarProducts = similarProducts.filter(Boolean);
+      
+      res.json(validSimilarProducts);
+    } catch (error) {
+      console.error("Error fetching similar products:", error);
+      res.status(500).json({ message: "Failed to fetch similar products" });
     }
   });
   
