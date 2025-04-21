@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 // Load Stripe outside of a component for performance
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -112,6 +113,13 @@ export default function StripeCheckout({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure component is mounted before accessing theme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Create a PaymentIntent as soon as the page loads
@@ -166,7 +174,7 @@ export default function StripeCheckout({
     );
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !mounted) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-10">
@@ -175,9 +183,40 @@ export default function StripeCheckout({
       </Card>
     );
   }
+  
+  // Configure Stripe Elements appearance based on the current theme
+  const isDarkMode = theme === 'dark' || resolvedTheme === 'dark';
+  
+  const appearance = {
+    theme: 'stripe',
+    variables: {
+      colorPrimary: '#7c3aed', // Primary purple color
+      colorBackground: isDarkMode ? '#1e1e2f' : '#ffffff',
+      colorText: isDarkMode ? '#ffffff' : '#1f2937',
+      colorDanger: '#ef4444',
+      fontFamily: 'system-ui, sans-serif',
+      borderRadius: '0.5rem',
+    },
+    rules: {
+      '.Input': {
+        backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+        color: isDarkMode ? '#ffffff' : '#1f2937',
+        border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
+      },
+      '.Label': {
+        color: isDarkMode ? '#9ca3af' : '#6b7280',
+      },
+    }
+  };
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
+    <Elements 
+      stripe={stripePromise} 
+      options={{ 
+        clientSecret,
+        appearance
+      }}
+    >
       <Card>
         <CardHeader>
           <CardTitle>Complete Your Payment</CardTitle>
