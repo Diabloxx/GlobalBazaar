@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Card } from "@/components/ui/card";
 import { WishlistItem, Product } from '@shared/schema';
 
 const ProductDetail = () => {
@@ -148,7 +149,7 @@ const ProductDetail = () => {
         ))}
         {hasHalfStar && <StarHalf className="h-5 w-5 fill-current" />}
         {[...Array(5 - fullStars - (hasHalfStar ? 1 : 0))].map((_, i) => (
-          <Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />
+          <Star key={`empty-${i}`} className="h-5 w-5 text-gray-300 dark:text-gray-600" />
         ))}
       </div>
     );
@@ -229,7 +230,7 @@ const ProductDetail = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Product Image */}
         <div className="lg:w-1/2">
-          <div className="bg-white rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm">
             <img 
               src={product.imageUrl} 
               alt={product.name} 
@@ -381,7 +382,7 @@ const ProductDetail = () => {
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="mt-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <p className="text-gray-700 leading-relaxed">
                 {product.description}
               </p>
@@ -402,7 +403,7 @@ const ProductDetail = () => {
             </div>
           </TabsContent>
           <TabsContent value="specifications" className="mt-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
                 <tbody className="divide-y divide-gray-200">
                   <tr>
@@ -426,7 +427,7 @@ const ProductDetail = () => {
             </div>
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <div className="flex items-center mb-6">
                 <div className="mr-4">
                   <div className="text-3xl font-bold text-gray-800">{product.rating}</div>
