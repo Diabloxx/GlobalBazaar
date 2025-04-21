@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
-            <h3 className="font-bold text-lg mb-4">ShopEase</h3>
+            <h3 className="font-bold text-lg mb-4">TechBazaar</h3>
             <p className="text-gray-400 mb-4">
               Your one-stop shop for amazing products at unbeatable prices. Fast shipping, easy returns, and 24/7 customer support.
             </p>
@@ -54,7 +54,7 @@ const Footer = () => {
           <div>
             <h3 className="font-medium text-lg mb-4">About Us</h3>
             <ul className="space-y-2">
-              <li><Link href="/about#about" className="text-gray-400 hover:text-white">About ShopEase</Link></li>
+              <li><Link href="/about#about" className="text-gray-400 hover:text-white">About TechBazaar</Link></li>
               <li><Link href="/about#careers" className="text-gray-400 hover:text-white">Careers</Link></li>
               <li><Link href="/about#privacy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
               <li><Link href="/about#terms" className="text-gray-400 hover:text-white">Terms & Conditions</Link></li>
@@ -68,7 +68,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <p className="text-gray-400 text-sm">
-                &copy; {new Date().getFullYear()} ShopEase. All rights reserved.
+                &copy; {new Date().getFullYear()} TechBazaar. All rights reserved.
               </p>
             </div>
             <div className="flex items-center">

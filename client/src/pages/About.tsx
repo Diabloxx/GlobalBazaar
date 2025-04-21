@@ -29,13 +29,13 @@ const About = () => {
     {
       name: "Sarah Johnson",
       title: "Founder & CEO",
-      bio: "Sarah founded ShopEase in 2018 with a vision to create a simpler shopping experience. With 15+ years in e-commerce, she's passionate about connecting consumers with quality products at affordable prices.",
+      bio: "Sarah founded TechBazaar in 2018 with a vision to create a simpler shopping experience. With 15+ years in e-commerce, she's passionate about connecting consumers with quality products at affordable prices.",
       imageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
     },
     {
       name: "Michael Chen",
       title: "CTO",
-      bio: "Michael leads technology at ShopEase, bringing 12 years of software engineering experience. He's built our platform from the ground up with a focus on performance, security, and scalability.",
+      bio: "Michael leads technology at TechBazaar, bringing 12 years of software engineering experience. He's built our platform from the ground up with a focus on performance, security, and scalability.",
       imageUrl: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
     },
     {
@@ -47,7 +47,7 @@ const About = () => {
     {
       name: "David Wilson",
       title: "Marketing Director",
-      bio: "David brings 10+ years of digital marketing expertise to ShopEase. He's responsible for our customer acquisition strategy and building the brand that millions have come to trust.",
+      bio: "David brings 10+ years of digital marketing expertise to TechBazaar. He's responsible for our customer acquisition strategy and building the brand that millions have come to trust.",
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
     }
   ];
