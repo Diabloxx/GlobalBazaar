@@ -161,20 +161,22 @@ const AdminTest = () => {
     }
   };
   
-  // Handle input changes for both login and master password forms
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'login' | 'master') => {
+  // Handle input changes for login form
+  const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (formType === 'login') {
-      setLoginForm(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    } else {
-      setMasterPasswordForm(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setLoginForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle input changes for master password form
+  const handleMasterPasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMasterPasswordForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
   
   // Manual login submission

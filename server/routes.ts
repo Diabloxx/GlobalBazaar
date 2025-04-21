@@ -1249,6 +1249,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Admin test security endpoints
+  
+  // Verify master password for admin testing functionality
+  app.post("/api/admin-test/verify-master-password", async (req, res) => {
+    try {
+      const { username, masterPassword } = req.body;
+      
+      if (!username || !masterPassword) {
+        return res.status(400).json({ message: "Username and master password are required" });
+      }
+      
+      // Find the user
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // If the user doesn't have a master password set, reject the request
+      if (!user.masterPassword) {
+        return res.status(401).json({ message: "User doesn't have admin test privileges" });
+      }
+      
+      // Verify the master password
+      const isValid = await bcrypt.compare(masterPassword, user.masterPassword);
+      
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid master password" });
+      }
+      
+      // Return success
+      res.json({ 
+        success: true, 
+        message: "Master password verified", 
+        canUseAdminTest: true 
+      });
+    } catch (error) {
+      console.error("Error verifying master password:", error);
+      res.status(500).json({ message: "Error verifying master password" });
+    }
+  });
+  
+  // Set master password (admin only)
+  app.post("/api/admin-test/set-master-password", isAdmin, async (req, res) => {
+    try {
+      const { userId, masterPassword } = req.body;
+      
+      if (!userId || !masterPassword) {
+        return res.status(400).json({ message: "User ID and master password are required" });
+      }
+      
+      // Hash the master password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(masterPassword, salt);
+      
+      // Update the user
+      const user = await storage.updateUser(userId, { masterPassword: hashedPassword });
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Master password set successfully" 
+      });
+    } catch (error) {
+      console.error("Error setting master password:", error);
+      res.status(500).json({ message: "Error setting master password" });
+    }
+  });
 
   return httpServer;
 }
