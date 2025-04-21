@@ -765,6 +765,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error processing seller application" });
     }
   });
+  
+  // Admin API - Verify seller application
+  app.post("/api/admin/verify-seller/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const { isVerified } = req.body;
+      if (typeof isVerified !== 'boolean') {
+        return res.status(400).json({ message: "Invalid isVerified parameter" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.role !== 'seller') {
+        return res.status(400).json({ message: "User is not a seller" });
+      }
+      
+      // Update user verification status
+      const updatedUser = await storage.updateUser(userId, { isVerifiedSeller: isVerified });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user verification status" });
+      }
+      
+      // Don't send back the password
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json({
+        message: `Seller ${isVerified ? 'verified' : 'unverified'} successfully`,
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Verify seller error:", error);
+      res.status(500).json({ message: "Failed to verify seller" });
+    }
+  });
+  
+  // Admin API - Process seller payouts
+  app.post("/api/admin/process-payouts", isAdmin, async (req, res) => {
+    try {
+      // Fetch all verified sellers
+      const users = await storage.getAllUsers();
+      const sellers = users.filter(user => user.role === 'seller' && user.isVerifiedSeller);
+      
+      if (sellers.length === 0) {
+        return res.json({ message: "No verified sellers found for payouts" });
+      }
+      
+      // For each seller, fetch their orders and calculate payout amount
+      const payoutResults = [];
+      
+      for (const seller of sellers) {
+        // Get all completed orders for products sold by this seller
+        const allOrders = await storage.getAllOrders();
+        
+        let totalSales = 0;
+        let totalItems = 0;
+        
+        // Calculate total sales for this seller
+        for (const order of allOrders) {
+          // orders.items contains an array of {productId, quantity, price}
+          const items = JSON.parse(JSON.stringify(order.items));
+          
+          if (!Array.isArray(items)) continue;
+          
+          for (const item of items) {
+            const product = await storage.getProduct(item.productId);
+            if (product && product.sellerId === seller.id) {
+              const itemTotal = item.price * item.quantity;
+              totalSales += itemTotal;
+              totalItems += item.quantity;
+            }
+          }
+        }
+        
+        // Calculate payout (80% of total sales - platform takes 20%)
+        const platformFee = totalSales * 0.2; // 20% commission
+        const payoutAmount = totalSales - platformFee;
+        
+        if (totalSales > 0) {
+          // In a real app, we would integrate with a payment provider like Stripe here
+          // to actually transfer the money to the seller
+          
+          payoutResults.push({
+            sellerId: seller.id,
+            sellerName: seller.username,
+            totalSales,
+            platformFee,
+            payoutAmount,
+            totalItems,
+            status: "processed",
+            date: new Date()
+          });
+        }
+      }
+      
+      res.json({
+        message: "Seller payouts processed successfully",
+        payouts: payoutResults,
+        totalPaid: payoutResults.reduce((sum, payout) => sum + payout.payoutAmount, 0),
+        count: payoutResults.length
+      });
+    } catch (error) {
+      console.error("Process payouts error:", error);
+      res.status(500).json({ message: "Failed to process seller payouts" });
+    }
+  });
 
   // Seller API - Get seller's products
   app.get("/api/seller/products", isAuthenticated, isSeller, async (req, res) => {
