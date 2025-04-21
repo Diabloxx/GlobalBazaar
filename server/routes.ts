@@ -9,8 +9,13 @@ import {
   insertProductSchema
 } from "@shared/schema";
 import { z } from "zod";
+import passport from "passport";
+import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
+  
   // All API routes will be prefixed with /api
   
   // Get all categories
@@ -161,28 +166,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // User login
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ message: "Login failed" });
       }
       
-      const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       
-      // Don't send back the password
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.json(userWithoutPassword);
-    
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Login session error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        // Don't send back the password
+        const { password, ...userWithoutPassword } = user;
+        return res.json(userWithoutPassword);
+      });
+    })(req, res, next);
+  });
+  
+  // User logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+  
+  // Get current user
+  app.get("/api/auth/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    // Don't send back the password
+    const { password, ...userWithoutPassword } = req.user;
+    res.json(userWithoutPassword);
   });
   
   // Get user profile
