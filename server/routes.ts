@@ -5,7 +5,8 @@ import {
   insertUserSchema, 
   insertCartItemSchema,
   insertOrderSchema,
-  insertWishlistItemSchema
+  insertWishlistItemSchema,
+  insertProductSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -574,17 +575,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Admin API - Get all products
+  // Admin API - Get all products with seller information
   app.get("/api/admin/products", async (req, res) => {
     try {
       // In a production app, we would check if the requester is an admin here
       
-      // Get all products (using the existing products endpoint)
+      // Get all products
       const products = await storage.getProducts();
-      res.json(products);
+      
+      // Get users to map seller information to products
+      const users = await storage.getAllUsers();
+      const userMap = new Map(users.map(user => [user.id, user]));
+      
+      // Add seller information to products
+      const productsWithSellerInfo = products.map(product => {
+        let sellerInfo = null;
+        
+        // Add seller information if sellerId exists
+        if (product.sellerId && userMap.has(product.sellerId)) {
+          const seller = userMap.get(product.sellerId);
+          sellerInfo = {
+            id: seller.id,
+            username: seller.username,
+            fullName: seller.fullName
+          };
+        }
+        
+        return {
+          ...product,
+          seller: sellerInfo
+        };
+      });
+      
+      res.json(productsWithSellerInfo);
     } catch (error) {
       console.error("Admin get products error:", error);
       res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+  
+  // Admin API - Create a product
+  app.post("/api/admin/products", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      const productData = insertProductSchema.parse(req.body);
+      
+      // Generate a slug from the product name if not provided
+      if (!productData.slug) {
+        productData.slug = productData.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      console.error("Admin create product error:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+  
+  // Admin API - Update a product
+  app.patch("/api/admin/products/:id", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Check if product exists
+      const existingProduct = await storage.getProduct(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Update product
+      const productData = req.body;
+      
+      // Generate a slug if name changes but slug isn't provided
+      if (productData.name && productData.name !== existingProduct.name && !productData.slug) {
+        productData.slug = productData.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      
+      const updatedProduct = await storage.updateProduct(productId, productData);
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Admin update product error:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+  
+  // Admin API - Delete a product
+  app.delete("/api/admin/products/:id", async (req, res) => {
+    try {
+      // In a production app, we would check if the requester is an admin here
+      
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Delete product
+      const deleted = await storage.deleteProduct(productId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Admin delete product error:", error);
+      res.status(500).json({ message: "Failed to delete product" });
     }
   });
   

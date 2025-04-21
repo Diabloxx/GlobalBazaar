@@ -393,6 +393,26 @@ export class MemStorage implements IStorage {
     return newProduct;
   }
   
+  async updateProduct(id: number, productData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const product = await this.getProduct(id);
+    if (!product) {
+      return undefined;
+    }
+    
+    const updatedProduct = { ...product, ...productData };
+    this.products.set(id, updatedProduct);
+    return updatedProduct;
+  }
+  
+  async deleteProduct(id: number): Promise<boolean> {
+    const product = await this.getProduct(id);
+    if (!product) {
+      return false;
+    }
+    
+    return this.products.delete(id);
+  }
+  
   // Cart operations
   async getCartItems(userId: number): Promise<CartItem[]> {
     return Array.from(this.cartItems.values()).filter(
@@ -632,6 +652,20 @@ export class DatabaseStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const [newProduct] = await db.insert(products).values(product).returning();
     return newProduct;
+  }
+  
+  async updateProduct(id: number, productData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set(productData)
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct;
+  }
+  
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id));
+    return result.rowCount > 0;
   }
 
   // Cart operations
