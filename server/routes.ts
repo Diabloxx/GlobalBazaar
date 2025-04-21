@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import passport from "passport";
-import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
+import { setupAuth, isAuthenticated, isSeller, isAdmin, ensureSessionForTracking } from "./auth";
 import bcrypt from "bcryptjs";
 import { WebSocketServer } from "ws";
 import Stripe from "stripe";
@@ -1703,8 +1703,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // User Activity Tracking
   
-  // Record user activity
-  app.post("/api/user-activity", async (req, res) => {
+  // Record user activity - ensuring we have a session for tracking even anonymous users
+  app.post("/api/user-activity", ensureSessionForTracking, async (req, res) => {
     try {
       const userId = req.isAuthenticated() && req.user ? req.user.id : null;
       
@@ -1722,6 +1722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activityData = userActivitySchema.parse({
         ...req.body,
         userId: userId || req.body.userId, // Use authenticated user if available
+        sessionId: req.session.id, // Use the actual session ID from the request
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -1733,6 +1734,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error recording user activity:", error);
       res.status(400).json({ message: "Failed to record activity", error: String(error) });
+    }
+  });
+  
+  // Get user activity by session ID (no authentication required)
+  app.get("/api/session-activity", ensureSessionForTracking, async (req, res) => {
+    try {
+      const sessionId = req.session.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      const activities = await storage.getSessionActivity(sessionId, limit);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching session activity:", error);
+      res.status(500).json({ message: "Failed to fetch session activity" });
     }
   });
   

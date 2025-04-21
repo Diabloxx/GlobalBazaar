@@ -28,23 +28,30 @@ declare global {
 const MemoryStoreSession = MemoryStore(session);
 
 export function setupAuth(app: Express) {
-  // Configure session middleware
+  // Configure session middleware with enhanced persistence
   app.use(session({
-    secret: 'shopease-secret-key',
+    secret: process.env.SESSION_SECRET || 'shopease-secret-key',
     resave: false,
-    saveUninitialized: true, // Changed to true to ensure session is always saved
+    saveUninitialized: true, // Track all visitors including those not logged in
     cookie: {
-      secure: false, // Set to false for development, would be true in production with HTTPS
-      maxAge: 1000 * 60 * 60 * 24 // 24 hours
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      httpOnly: true, // Prevent client-side JS from reading the cookie
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days for better persistence
+      path: '/',
+      sameSite: 'lax' // Provides some CSRF protection while allowing normal navigation
     },
     store: new MemoryStoreSession({
-      checkPeriod: 86400000 // Cleanup expired sessions once per day
+      checkPeriod: 86400000, // Cleanup expired sessions once per day
+      stale: false // Force using stale sessions when DB unreachable
     })
   }));
 
   // Initialize Passport
   app.use(passport.initialize());
   app.use(passport.session());
+  
+  // Apply session tracking middleware to all routes
+  app.use(ensureSessionForTracking);
 
   // Configure local strategy
   passport.use(new LocalStrategy(
@@ -106,4 +113,21 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   return res.status(403).json({ message: 'You must be an admin to access this resource' });
+}
+
+// Middleware to ensure a session exists for tracking purposes
+export function ensureSessionForTracking(req: Request, res: Response, next: NextFunction) {
+  // This middleware ensures all requests have a session, even for anonymous users
+  // It's used for user activity tracking purposes
+  if (!req.session.id) {
+    // This shouldn't happen with our setup, but just in case
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("Error regenerating session:", err);
+      }
+      next();
+    });
+  } else {
+    next();
+  }
 }

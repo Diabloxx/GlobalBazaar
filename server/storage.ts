@@ -30,6 +30,7 @@ export interface IStorage {
   // User Activity Tracking
   recordUserActivity(activity: InsertUserActivity): Promise<UserActivity>;
   getUserActivity(userId: number, limit?: number): Promise<UserActivity[]>;
+  getSessionActivity(sessionId: string, limit?: number): Promise<UserActivity[]>; // Get activity by session ID
   getProductViewHistory(userId: number, limit?: number): Promise<number[]>; // Returns product IDs
   getSearchHistory(userId: number, limit?: number): Promise<string[]>; // Returns search queries
   
