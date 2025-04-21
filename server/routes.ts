@@ -504,6 +504,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Seller application endpoint
+  app.post("/api/seller/apply", async (req, res) => {
+    try {
+      const { userId, ...applicationData } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      // Get the user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update the user with seller role
+      const updatedUser = await storage.updateUser(userId, { role: "seller" });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user role" });
+      }
+      
+      // In a real app, save application details to a separate table
+      console.log(`Seller application received for user ${userId}:`, applicationData);
+      
+      // Return success with user data (excluding password)
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.status(200).json({
+        message: "Seller application approved",
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error("Error processing seller application:", error);
+      res.status(500).json({ message: "Error processing seller application" });
+    }
+  });
+  
   const httpServer = createServer(app);
   return httpServer;
 }
