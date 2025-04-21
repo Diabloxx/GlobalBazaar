@@ -423,6 +423,35 @@ const SellerDashboard = () => {
       });
     },
   });
+  
+  // Update order status mutation
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: number, status: string }) => {
+      try {
+        console.log(`Updating order ${orderId} status to ${status}`);
+        const res = await apiRequest('PATCH', `/api/seller/orders/${orderId}/status`, { status });
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Order status updated",
+        description: `Order #${data.id} status has been updated to ${data.status}.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/seller/orders'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update order status",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Handle form submission
   const onSubmit = (data: ProductFormValues) => {
@@ -445,6 +474,12 @@ const SellerDashboard = () => {
     if (confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
       deleteProductMutation.mutate(id);
     }
+  };
+  
+  // Handle update order status
+  const handleUpdateOrderStatus = (orderId: number, status: string) => {
+    console.log(`Order ${orderId} status updated to ${status}`);
+    updateOrderStatusMutation.mutate({ orderId, status });
   };
 
   // Render loading state if checking authentication
@@ -954,8 +989,8 @@ const SellerDashboard = () => {
                           <TableCell>
                             <Badge 
                               variant={
-                                order.status === 'completed' ? 'outline' : 
-                                order.status === 'processing' ? 'secondary' : 
+                                order.status === 'delivered' || order.status === 'paid' ? 'outline' : 
+                                order.status === 'processing' || order.status === 'shipped' ? 'secondary' : 
                                 order.status === 'cancelled' ? 'destructive' : 
                                 'outline'
                               }
@@ -963,8 +998,23 @@ const SellerDashboard = () => {
                               {order.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">View Details</Button>
+                          <TableCell className="space-x-2 flex items-center">
+                            <Select
+                              onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                              defaultValue={order.status}
+                            >
+                              <SelectTrigger className="w-[130px]">
+                                <SelectValue placeholder="Update status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="processing">Processing</SelectItem>
+                                <SelectItem value="shipped">Shipped</SelectItem>
+                                <SelectItem value="delivered">Delivered</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button variant="outline" size="sm" className="ml-2">View</Button>
                           </TableCell>
                         </TableRow>
                       ))}
