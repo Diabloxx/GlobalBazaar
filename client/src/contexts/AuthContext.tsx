@@ -1,0 +1,173 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { User } from '@shared/schema';
+
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (username: string, password: string) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => void;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+}
+
+interface RegisterData {
+  username: string;
+  password: string;
+  email: string;
+  fullName?: string;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Check if user is logged in on initial load
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Failed to parse user from localStorage:', error);
+        localStorage.removeItem('user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = async (username: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/auth/login', { username, password });
+      const userData = await response.json();
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      toast({
+        title: 'Login successful',
+        description: `Welcome back, ${userData.username}!`,
+      });
+      
+      // Invalidate any cached queries that might depend on auth state
+      queryClient.invalidateQueries();
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'Invalid credentials',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (userData: RegisterData) => {
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/auth/register', userData);
+      const newUser = await response.json();
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      toast({
+        title: 'Registration successful',
+        description: `Welcome to ShopEase, ${newUser.username}!`,
+      });
+      
+      // Invalidate any cached queries that might depend on auth state
+      queryClient.invalidateQueries();
+    } catch (error) {
+      toast({
+        title: 'Registration failed',
+        description: error instanceof Error ? error.message : 'Could not create account',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    
+    toast({
+      title: 'Logged out',
+      description: 'You have been successfully logged out',
+    });
+    
+    // Invalidate any cached queries that might depend on auth state
+    queryClient.invalidateQueries();
+  };
+
+  const updateProfile = async (userData: Partial<User>) => {
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to update your profile',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await apiRequest('PATCH', `/api/users/${user.id}`, userData);
+      const updatedUser = await response.json();
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been successfully updated',
+      });
+      
+      // Invalidate any cached queries that might depend on user data
+      queryClient.invalidateQueries();
+    } catch (error) {
+      toast({
+        title: 'Update failed',
+        description: error instanceof Error ? error.message : 'Could not update profile',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    register,
+    logout,
+    updateProfile,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
