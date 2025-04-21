@@ -387,7 +387,7 @@ const About = () => {
               
               <h3>Intellectual Property</h3>
               <p>
-                All content on our website, including text, graphics, logos, images, and software, is the property of ShopEase or our content suppliers and is protected by copyright laws.
+                All content on our website, including text, graphics, logos, images, and software, is the property of TechBazaar or our content suppliers and is protected by copyright laws.
               </p>
               
               <h3>User Accounts</h3>
@@ -397,7 +397,7 @@ const About = () => {
               
               <h3>Limitation of Liability</h3>
               <p>
-                To the maximum extent permitted by law, ShopEase shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the site or products.
+                To the maximum extent permitted by law, TechBazaar shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the site or products.
               </p>
               
               <h3>Governing Law</h3>
@@ -412,7 +412,7 @@ const About = () => {
               
               <h3>Contact Us</h3>
               <p>
-                If you have any questions about these Terms, please contact us at legal@shopease.com.
+                If you have any questions about these Terms, please contact us at legal@techbazaar.com.
               </p>
             </CardContent>
           </Card>
@@ -424,7 +424,7 @@ const About = () => {
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h1 className="text-4xl font-bold mb-4">Affiliate Program</h1>
               <p className="text-gray-600 text-lg">
-                Partner with ShopEase and earn commissions on sales you refer.
+                Partner with TechBazaar and earn commissions on sales you refer.
               </p>
             </div>
             
@@ -502,7 +502,7 @@ const About = () => {
                   </CardHeader>
                   <CardContent className="text-center">
                     <p className="text-gray-600">
-                      Use your unique affiliate links, banners, and other marketing materials to promote ShopEase products.
+                      Use your unique affiliate links, banners, and other marketing materials to promote TechBazaar products.
                     </p>
                   </CardContent>
                 </Card>
@@ -526,7 +526,7 @@ const About = () => {
             <div className="bg-primary/5 p-8 rounded-lg text-center">
               <h2 className="text-2xl font-bold mb-4">Ready to Join?</h2>
               <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                Join thousands of affiliates who are already earning by promoting ShopEase products. Our affiliate program is perfect for bloggers, influencers, and content creators in the lifestyle, tech, and home goods niches.
+                Join thousands of affiliates who are already earning by promoting TechBazaar products. Our affiliate program is perfect for bloggers, influencers, and content creators in the lifestyle, tech, and home goods niches.
               </p>
               <Button size="lg">Apply Now</Button>
             </div>
@@ -537,7 +537,7 @@ const About = () => {
         <TabsContent value="blog">
           <div className="space-y-8">
             <div className="text-center max-w-3xl mx-auto mb-12">
-              <h1 className="text-4xl font-bold mb-4">ShopEase Blog</h1>
+              <h1 className="text-4xl font-bold mb-4">TechBazaar Blog</h1>
               <p className="text-gray-600 text-lg">
                 Product guides, shopping tips, and company news
               </p>
