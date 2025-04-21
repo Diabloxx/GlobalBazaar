@@ -709,23 +709,56 @@ export class MemStorage implements IStorage {
   }
   
   async getProductViewHistory(userId: number, limit: number = 10): Promise<number[]> {
-    const activities = Array.from(this.userActivities.values())
-      .filter(
-        activity => 
-          activity.userId === userId && 
-          activity.activityType === 'view_product'
+    const activities = await db.select()
+      .from(userActivity)
+      .where(
+        and(
+          eq(userActivity.userId, userId),
+          eq(userActivity.activityType, 'product_view')
+        )
       )
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .orderBy(desc(userActivity.createdAt))
+      .limit(limit);
     
     // Extract unique product IDs from the view history
     const productIds = new Set<number>();
     const result: number[] = [];
     
     for (const activity of activities) {
-      const productId = (activity.details as any).productId;
+      const details = activity.details as any;
+      const productId = details?.productId ? Number(details.productId) : null;
       if (productId && !productIds.has(productId)) {
         productIds.add(productId);
         result.push(productId);
+        if (result.length >= limit) break;
+      }
+    }
+    
+    return result;
+  }
+  
+  async getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {
+    const activities = await db.select()
+      .from(userActivity)
+      .where(
+        and(
+          eq(userActivity.userId, userId),
+          eq(userActivity.activityType, 'search')
+        )
+      )
+      .orderBy(desc(userActivity.createdAt))
+      .limit(limit);
+    
+    // Extract unique search queries from history
+    const searchQueries = new Set<string>();
+    const result: string[] = [];
+    
+    for (const activity of activities) {
+      const details = activity.details as any;
+      const query = details?.query as string;
+      if (query && !searchQueries.has(query)) {
+        searchQueries.add(query);
+        result.push(query);
         if (result.length >= limit) break;
       }
     }

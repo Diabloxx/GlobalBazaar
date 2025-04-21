@@ -232,6 +232,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get personalized product recommendations
+  app.get("/api/products/recommendations", async (req, res) => {
+    try {
+      const userId = req.isAuthenticated() ? req.user?.id : null;
+      
+      if (!userId) {
+        // For anonymous users, return bestsellers
+        const products = await storage.getBestsellerProducts();
+        return res.json(products);
+      }
+      
+      // Get user's view history
+      const viewHistory = await storage.getProductViewHistory(userId, 5);
+      
+      if (!viewHistory || viewHistory.length === 0) {
+        // If no view history, return bestsellers
+        const products = await storage.getBestsellerProducts();
+        return res.json(products);
+      }
+      
+      // Get categories from view history
+      const viewedProducts = [];
+      const categoryIds = new Set();
+      
+      for (const productId of viewHistory) {
+        const product = await storage.getProduct(productId);
+        if (product) {
+          viewedProducts.push(product);
+          categoryIds.add(product.categoryId);
+        }
+      }
+      
+      // Get similar products from same categories
+      const categoryArr = Array.from(categoryIds);
+      let recommendations = [];
+      
+      for (const categoryId of categoryArr) {
+        const products = await storage.getProductsByCategory(categoryId);
+        recommendations = [...recommendations, ...products];
+      }
+      
+      // Remove duplicates and products user has already viewed
+      const viewedIds = new Set(viewHistory);
+      const uniqueRecommendations = recommendations
+        .filter(product => !viewedIds.has(product.id))
+        .filter((product, index, self) => 
+          index === self.findIndex(p => p.id === product.id)
+        );
+      
+      // Limit to 8 recommendations
+      res.json(uniqueRecommendations.slice(0, 8));
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      res.status(500).json({ message: "Failed to fetch product recommendations" });
+    }
+  });
+  
   // Get a product by slug
   app.get("/api/products/:slug", async (req, res) => {
     try {
