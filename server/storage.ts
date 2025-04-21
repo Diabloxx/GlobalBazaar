@@ -766,31 +766,6 @@ export class MemStorage implements IStorage {
     return result;
   }
   
-  async getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {
-    const activities = Array.from(this.userActivities.values())
-      .filter(
-        activity => 
-          activity.userId === userId && 
-          activity.activityType === 'search'
-      )
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    
-    // Extract unique search queries
-    const searchQueries = new Set<string>();
-    const result: string[] = [];
-    
-    for (const activity of activities) {
-      const query = (activity.details as any).query;
-      if (query && !searchQueries.has(query)) {
-        searchQueries.add(query);
-        result.push(query);
-        if (result.length >= limit) break;
-      }
-    }
-    
-    return result;
-  }
-  
   private async updateProductRating(productId: number): Promise<void> {
     const product = this.products.get(productId);
     if (!product) return;
@@ -1321,15 +1296,17 @@ export class DatabaseStorage implements IStorage {
     return query;
   }
   
+
+  
   async getProductViewHistory(userId: number, limit: number = 10): Promise<number[]> {
-    // Query all view_product activities
+    // Query all product_view activities
     const activities = await db
       .select()
       .from(userActivity)
       .where(
         and(
           eq(userActivity.userId, userId),
-          eq(userActivity.activityType, 'view_product')
+          eq(userActivity.activityType, 'product_view')
         )
       )
       .orderBy(desc(userActivity.createdAt));
