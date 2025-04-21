@@ -26,8 +26,8 @@ interface CheckoutForm {
   notes: string;
 }
 
-// PayPal button component
-const PayPalButton = ({ onSuccess, amount, disabled, currency }: { 
+// Stripe button component
+const StripeButton = ({ onSuccess, amount, disabled, currency }: { 
   onSuccess: () => void, 
   amount: number, 
   disabled: boolean,
@@ -37,7 +37,7 @@ const PayPalButton = ({ onSuccess, amount, disabled, currency }: {
   
   const handleClick = () => {
     setIsPending(true);
-    // Simulate PayPal processing
+    // Simulate Stripe processing
     setTimeout(() => {
       setIsPending(false);
       onSuccess();
@@ -49,14 +49,14 @@ const PayPalButton = ({ onSuccess, amount, disabled, currency }: {
       onClick={handleClick}
       disabled={disabled || isPending}
       className={`w-full flex items-center justify-center px-4 py-3 rounded-full text-white font-medium transition-colors ${
-        disabled || isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0070ba] hover:bg-[#005ea6]'
+        disabled || isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#635BFF] hover:bg-[#4F46E5]'
       }`}
     >
       {isPending ? (
         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
       ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" width="85" height="21" viewBox="0 0 85 21" fill="white">
-          <path d="M8.1,20.5h-6C1.5,20.5,1,20,1,19.4L4.8,1.1C4.9,0.5,5.5,0,6.1,0h5.8c3.2,0,5.5,0.9,6.8,2.6c0.6,0.8,0.9,1.6,1.1,2.4 c0.1,0.9,0.1,2,0,3.3l0,0.5c0,0.1,0,0.2,0,0.3C19.1,16.1,15.4,20.5,8.1,20.5z M20.7,8.9L20.7,8.9L20.7,8.9z M19.3,2.8 c-1-1.4-2.8-2.1-5.4-2.1h-8L2.3,18.9h6c6.5,0,9.3-3.9,10-10.4l0-0.4c0.1-1.3,0.1-2.3,0-3.1C19.7,4.1,19.5,3.4,19.3,2.8z M6.8,9.3 c0.1-0.5,0.6-0.9,1.1-0.9h4.2c0.4,0,0.7,0.1,1,0.3c0.2,0.2,0.4,0.5,0.3,0.8c0,0.7-0.4,1.5-1.3,1.7l-0.2,0.1v0.2 c0,0.4-0.3,0.9-1.1,0.9H7.6c-0.2,0-0.4-0.1-0.5-0.3C7,12,7,11.8,7,11.6L6.8,9.3z M38.4,5.4c-2.4,0-4.4,1-5.4,3h0l0,0 c-0.2,0.3-0.2,0.6-0.3,0.9L30,20.2c0,0.1,0,0.1,0,0.2c0,0.1,0.1,0.1,0.2,0.1h2.9c0.2,0,0.4-0.2,0.5-0.6l0.5-2.2v0.1 c0.5,1.5,2,2.5,4.1,2.5c3.9,0,6.4-3.1,7-7c0.1-0.9,0.1-1.8,0-2.5C44.5,7.6,42.1,5.4,38.4,5.4z M39.3,17.6c-1.7,0-2.4-1.4-2.4-2.7 c0-0.3,0-0.5,0.1-0.8c0.2-1.9,1.5-3.3,3.2-3.3c1.7,0,2.3,1.4,2.3,2.6c0,0.3,0,0.7-0.1,1C41.9,16.4,40.6,17.6,39.3,17.6z M59.7,8.9c-0.1-2.2-2-3.5-5-3.5c-2.3,0-4.3,0.8-5.4,3H49l0,0c-0.2,0.3-0.2,0.6-0.3,0.9l-2.6,11c0,0.2,0.1,0.3,0.2,0.3h2.9 c0.2,0,0.4-0.2,0.5-0.5L51,12c0.1-0.5,0.6-0.9,1.1-0.9h0.7c2.8,0,4.9-1.4,5.3-4.3C58.6,10.6,59.7,8.9,59.7,8.9z M56.3,7 c-0.1,0.5-0.6,0.9-1.1,0.9h-4.2c-0.4,0-0.7-0.1-1-0.3c-0.3-0.2-0.4-0.5-0.4-0.8c0-0.7,0.4-1.4,1.3-1.7l0.2-0.1V4.9 c0-0.4,0.3-0.9,1.1-0.9h2.2c0.2,0,0.4,0.1,0.5,0.2c0.1,0.1,0.2,0.3,0.1,0.5L56.3,7z M78.9,5.8h-2.9C75.9,5.8,75.7,6,75.6,6.2 l-4.3,9L69.7,6.6C69.7,6.2,69.4,6,69.1,6h-3c-0.2,0-0.3,0.2-0.2,0.3l3,12.4l-2.8,4c-0.1,0.1,0,0.3,0.2,0.3h2.9 c0.2,0,0.4-0.1,0.5-0.3l9.1-16.7C79.1,6,79.1,5.8,78.9,5.8z"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="60" height="25" viewBox="0 0 60 25" fill="white">
+          <path d="M59.64 14.28h-8.06v1.59h5.39v3.15h-5.39v1.65h8.06v3.23H47.31V11.07h12.33v3.21zm-15.75 9.62V11.07h4.32v12.83h-4.32zm-5.58-5.2l4.35-7.63h-4.63l-2.72 5.1-1.13-5.1h-4.69l2.57 12.83h4.48l1.77-5.2zm-12.92 5.2V11.07h4.32v12.83h-4.32zm-6.21-9.62h-3.95v9.62h-4.27V14.28H6.5v-3.21h12.68v3.21zM5.83 16.72l-1-5.65H.64L3.5 23.9h4.22L10.5 11.07H6.35l-0.52 5.65z"/>
         </svg>
       )}
       {isPending && <span className="ml-2">Processing...</span>}
@@ -182,7 +182,7 @@ const Checkout = () => {
     createOrderMutation.mutate({
       totalPrice: total,
       currency: currency.code,
-      paymentMethod: 'paypal',
+      paymentMethod: 'stripe',
       shippingAddress: `${shippingData.address}, ${shippingData.city}, ${shippingData.state} ${shippingData.postalCode}, ${shippingData.country}`,
       items: cartItems.map(item => ({
         productId: item.product.id,
@@ -446,7 +446,7 @@ const Checkout = () => {
                 <div className="mt-6 text-sm text-gray-500">
                   <p className="flex items-center">
                     <Shield className="h-4 w-4 mr-2 text-primary" />
-                    Secure checkout powered by PayPal
+                    Secure checkout powered by Stripe
                   </p>
                 </div>
               </div>
@@ -471,7 +471,7 @@ const Checkout = () => {
                         checked
                         className="mr-2"
                       />
-                      <label htmlFor="paypal" className="font-medium">PayPal</label>
+                      <label htmlFor="stripe" className="font-medium">Stripe</label>
                     </div>
                     
                     <PayPalButton 

@@ -153,8 +153,8 @@ const CategoryProducts = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Category Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-3">{category.name}</h1>
-        <p className="text-gray-600">{category.description}</p>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-3">{category.name}</h1>
+        <p className="text-gray-600 dark:text-gray-300">{category.description}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
