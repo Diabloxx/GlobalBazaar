@@ -407,20 +407,20 @@ const ProductDetail = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <tbody className="divide-y divide-gray-200">
                   <tr>
-                    <td className="py-3 text-gray-600 w-1/3">Model</td>
-                    <td className="py-3 text-gray-800">{product.name}</td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400 w-1/3">Model</td>
+                    <td className="py-3 text-gray-800 dark:text-gray-200">{product.name}</td>
                   </tr>
                   <tr>
-                    <td className="py-3 text-gray-600">Category</td>
-                    <td className="py-3 text-gray-800">{category?.name || 'Unknown'}</td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">Category</td>
+                    <td className="py-3 text-gray-800 dark:text-gray-200">{category?.name || 'Unknown'}</td>
                   </tr>
                   <tr>
-                    <td className="py-3 text-gray-600">Stock</td>
-                    <td className="py-3 text-gray-800">{product.inventory} units</td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">Stock</td>
+                    <td className="py-3 text-gray-800 dark:text-gray-200">{product.inventory} units</td>
                   </tr>
                   <tr>
-                    <td className="py-3 text-gray-600">SKU</td>
-                    <td className="py-3 text-gray-800">SKU-{product.id}</td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">SKU</td>
+                    <td className="py-3 text-gray-800 dark:text-gray-200">SKU-{product.id}</td>
                   </tr>
                 </tbody>
               </table>
@@ -430,12 +430,12 @@ const ProductDetail = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
               <div className="flex items-center mb-6">
                 <div className="mr-4">
-                  <div className="text-3xl font-bold text-gray-800">{product.rating}</div>
-                  <div className="text-gray-500 text-sm">out of 5</div>
+                  <div className="text-3xl font-bold text-gray-800 dark:text-gray-100">{product.rating}</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm">out of 5</div>
                 </div>
                 <div className="flex-1">
                   {renderRatingStars(product.rating || 0)}
-                  <div className="text-gray-500 text-sm mt-1">{product.reviewCount} reviews</div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm mt-1">{product.reviewCount} reviews</div>
                 </div>
               </div>
               
@@ -443,21 +443,21 @@ const ProductDetail = () => {
                 {/* This is just placeholder data since we don't have actual reviews in our schema */}
                 <div className="border-b border-gray-200 pb-4">
                   <div className="flex items-center mb-2">
-                    <div className="font-medium text-gray-800">John D.</div>
-                    <div className="text-gray-500 text-sm ml-2">Verified Purchase</div>
+                    <div className="font-medium text-gray-800 dark:text-gray-200">John D.</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm ml-2">Verified Purchase</div>
                   </div>
                   <div className="flex text-yellow-400 mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="h-4 w-4 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-700 text-sm">Great product! Exactly as described and fast shipping.</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">Great product! Exactly as described and fast shipping.</p>
                 </div>
                 
                 <div className="border-b border-gray-200 pb-4">
                   <div className="flex items-center mb-2">
-                    <div className="font-medium text-gray-800">Sarah M.</div>
-                    <div className="text-gray-500 text-sm ml-2">Verified Purchase</div>
+                    <div className="font-medium text-gray-800 dark:text-gray-200">Sarah M.</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm ml-2">Verified Purchase</div>
                   </div>
                   <div className="flex text-yellow-400 mb-2">
                     {[...Array(4)].map((_, i) => (
@@ -467,7 +467,7 @@ const ProductDetail = () => {
                       <Star key={i} className="h-4 w-4 text-gray-300" />
                     ))}
                   </div>
-                  <p className="text-gray-700 text-sm">Good quality but a little smaller than I expected.</p>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">Good quality but a little smaller than I expected.</p>
                 </div>
               </div>
               
