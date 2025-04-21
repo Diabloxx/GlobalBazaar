@@ -290,6 +290,10 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+  
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const newUser: User = { ...user, id, createdAt: new Date() };
@@ -450,6 +454,11 @@ export class MemStorage implements IStorage {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
   
+  async getAllOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
   async getOrder(id: number): Promise<Order | undefined> {
     return this.orders.get(id);
   }
@@ -532,6 +541,10 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users);
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -690,6 +703,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(orders)
       .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+  
+  async getAllOrders(): Promise<Order[]> {
+    return db
+      .select()
+      .from(orders)
       .orderBy(desc(orders.createdAt));
   }
 
