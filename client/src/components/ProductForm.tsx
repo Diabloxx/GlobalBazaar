@@ -49,6 +49,7 @@ const productSchema = z.object({
   isSale: z.boolean().default(false),
   isNew: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
+  sellerId: z.number().nullable().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -69,6 +70,12 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
   });
+  
+  // Fetch sellers (only needed for admin mode)
+  const { data: sellers = [] } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: isAdmin, // Only fetch if in admin mode
+  });
 
   // Form setup
   const form = useForm<ProductFormValues>({
@@ -85,6 +92,7 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
       isSale: product?.isSale || false,
       isNew: product?.isNew || false,
       isBestSeller: product?.isBestSeller || false,
+      sellerId: product?.sellerId || null,
     },
   });
 
@@ -103,6 +111,7 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
         isSale: product.isSale,
         isNew: product.isNew,
         isBestSeller: product.isBestSeller,
+        sellerId: product.sellerId,
       });
     }
   }, [form, product]);
@@ -241,7 +250,7 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
               <FormField
                 control={form.control}
                 name="categoryId"
@@ -269,6 +278,40 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
                   </FormItem>
                 )}
               />
+
+              {isAdmin && (
+                <FormField
+                  control={form.control}
+                  name="sellerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Seller</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === "null" ? null : parseInt(value))}
+                        defaultValue={field.value !== null ? field.value.toString() : "null"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select seller" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="null">No Seller (Admin product)</SelectItem>
+                          {sellers
+                            .filter((user: any) => user.role === 'seller')
+                            .map((seller: any) => (
+                              <SelectItem key={seller.id} value={seller.id.toString()}>
+                                {seller.username} - {seller.fullName || seller.email}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
