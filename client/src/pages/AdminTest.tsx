@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Database, UserCog, RefreshCw, LogIn, User, Lock } from 'lucide-react';
+import { Shield, Database, UserCog, RefreshCw, LogIn, User, Lock, Key } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AdminTest = () => {
   const { user, updateProfile, login } = useAuth();
@@ -13,6 +14,11 @@ const AdminTest = () => {
   const [serverUser, setServerUser] = useState<any>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [masterPasswordVerified, setMasterPasswordVerified] = useState(false);
+  const [masterPasswordForm, setMasterPasswordForm] = useState({
+    username: '',
+    masterPassword: ''
+  });
   const [loginForm, setLoginForm] = useState({
     username: '',
     password: ''
@@ -155,13 +161,20 @@ const AdminTest = () => {
     }
   };
   
-  // Handle manual login
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle input changes for both login and master password forms
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, formType: 'login' | 'master') => {
     const { name, value } = e.target;
-    setLoginForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (formType === 'login') {
+      setLoginForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      setMasterPasswordForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
   
   // Manual login submission
@@ -181,6 +194,65 @@ const AdminTest = () => {
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Invalid credentials",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Verify master password
+  const verifyMasterPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/admin-test/verify-master-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: masterPasswordForm.username || (user?.username || ''),
+          masterPassword: masterPasswordForm.masterPassword
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setMasterPasswordVerified(true);
+          setDebugInfo('Master password verified. Admin test functionality unlocked.');
+          toast({
+            title: "Access Granted",
+            description: "Master password verified successfully",
+          });
+          // Store verification status
+          sessionStorage.setItem('admin_test_verified', 'true');
+        } else {
+          setDebugInfo(`Master password verification failed: ${data.message}`);
+          toast({
+            title: "Access Denied",
+            description: "Invalid master password",
+            variant: "destructive"
+          });
+        }
+      } else {
+        const error = await response.json();
+        setDebugInfo(`Failed to verify master password: ${error.message}`);
+        toast({
+          title: "Verification Failed",
+          description: error.message || "Server error",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Master password verification failed:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      toast({
+        title: "Verification Error",
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive"
       });
     } finally {
