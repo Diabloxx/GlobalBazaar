@@ -156,15 +156,36 @@ const Header = () => {
               Home
             </Link>
 
-            {categories.map((category) => (
-              <Link 
-                key={category.id}
-                href={`/category/${category.slug}`} 
-                className={location === `/category/${category.slug}` ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}
-              >
-                {category.name}
-              </Link>
-            ))}
+            {/* Categories Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center font-medium text-gray-700 hover:text-primary">
+                Categories <ChevronDown className="h-4 w-4 ml-1" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {categories.map((category) => (
+                  <DropdownMenuItem key={category.id} asChild>
+                    <Link 
+                      href={`/category/${category.slug}`}
+                      className="w-full cursor-pointer"
+                    >
+                      {category.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Link href="/sale" className={location === '/sale' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+              Sale
+            </Link>
+            
+            <Link href="/new-arrivals" className={location === '/new-arrivals' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+              New Arrivals
+            </Link>
+            
+            <Link href="/bestsellers" className={location === '/bestsellers' ? "text-primary font-medium" : "text-gray-700 font-medium hover:text-primary"}>
+              Bestsellers
+            </Link>
           </div>
           
           {/* Mobile Navigation Toggle */}
