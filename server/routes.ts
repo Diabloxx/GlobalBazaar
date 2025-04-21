@@ -221,13 +221,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get current user
   app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     
-    // Don't send back the password
-    const { password, ...userWithoutPassword } = req.user;
-    res.json(userWithoutPassword);
+    // Get the latest user data from the database
+    storage.getUser(req.user.id)
+      .then(user => {
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Don't send back the password
+        const { password, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      })
+      .catch(error => {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ message: "Failed to fetch user data" });
+      });
   });
   
   // Get user profile
@@ -296,11 +308,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      console.log("Setting user to admin, current user:", user);
+      
       // Update user role to admin
       const updatedUser = await storage.updateUser(userId, { role: "admin" });
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user role" });
       }
+      
+      console.log("User after role update:", updatedUser);
       
       // Don't send back the password
       const { password, ...userWithoutPassword } = updatedUser;
@@ -312,6 +328,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Set admin error:", error);
       res.status(500).json({ message: "Failed to set user as admin" });
+    }
+  });
+  
+  // Debug endpoint to get user by ID with role information
+  app.get("/api/debug/user/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't send back the password
+      const { password, ...userWithoutPassword } = user;
+      
+      res.json({
+        message: "User debug info",
+        user: userWithoutPassword,
+        role: user.role,
+        hasRole: !!user.role,
+        roleType: typeof user.role,
+        isAdmin: user.role === "admin"
+      });
+    } catch (error) {
+      console.error("Debug user error:", error);
+      res.status(500).json({ message: "Failed to get user debug info" });
     }
   });
   

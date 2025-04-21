@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
 }
 
@@ -41,19 +41,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if user is logged in on initial load
+  // Check if user is logged in on initial load and refresh from server
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const fetchCurrentUser = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        // Try to get current session from server first
+        const response = await fetch('/api/auth/user');
+        if (response.ok) {
+          const userData = await response.json();
+          console.log("Fetched user from server:", userData);
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+          setIsLoading(false);
+          return;
+        }
       } catch (error) {
-        console.error('Failed to parse user from localStorage:', error);
-        localStorage.removeItem('user');
+        console.error('Error fetching current user:', error);
       }
-    }
-    setIsLoading(false);
+      
+      // Fall back to localStorage if server fetch fails
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          console.log("Using user from localStorage:", parsedUser);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Failed to parse user from localStorage:', error);
+          localStorage.removeItem('user');
+        }
+      }
+      
+      setIsLoading(false);
+    };
+    
+    fetchCurrentUser();
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -61,6 +83,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const response = await apiRequest('POST', '/api/auth/login', { username, password });
       const userData = await response.json();
+      console.log("Login successful, user data:", userData);
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       
@@ -72,6 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Invalidate any cached queries that might depend on auth state
       queryClient.invalidateQueries();
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: 'Login failed',
         description: error instanceof Error ? error.message : 'Invalid credentials',
@@ -110,17 +134,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    
-    toast({
-      title: 'Logged out',
-      description: 'You have been successfully logged out',
-    });
-    
-    // Invalidate any cached queries that might depend on auth state
-    queryClient.invalidateQueries();
+  const logout = async () => {
+    try {
+      // Call the server logout endpoint
+      await apiRequest('POST', '/api/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear local state even if server logout fails
+      setUser(null);
+      localStorage.removeItem('user');
+      
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out',
+      });
+      
+      // Invalidate any cached queries that might depend on auth state
+      queryClient.invalidateQueries();
+    }
   };
 
   const updateProfile = async (userData: Partial<User>) => {
@@ -137,6 +169,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const response = await apiRequest('PATCH', `/api/users/${user.id}`, userData);
       const updatedUser = await response.json();
+      console.log("Profile update successful, updated user data:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
@@ -148,6 +181,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Invalidate any cached queries that might depend on user data
       queryClient.invalidateQueries();
     } catch (error) {
+      console.error("Profile update error:", error);
       toast({
         title: 'Update failed',
         description: error instanceof Error ? error.message : 'Could not update profile',
