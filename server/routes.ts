@@ -26,6 +26,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // All API routes will be prefixed with /api
   
+  // Debug endpoints
+  app.get("/api/debug/user/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    try {
+      // Get user from database
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get session info
+      const sessionUser = req.user;
+      
+      // Return debug info
+      res.json({
+        dbUser: user, 
+        sessionUser: sessionUser,
+        isAuthenticated: req.isAuthenticated(),
+        sessionInfo: {
+          id: req.sessionID,
+          cookie: req.session?.cookie
+        }
+      });
+    } catch (error) {
+      console.error("Debug error:", error);
+      res.status(500).json({ message: "Error retrieving debug info" });
+    }
+  });
+  
+  // Set user as admin
+  app.post("/api/users/:id/set-admin", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
+    try {
+      // Update user in database
+      const updatedUser = await storage.updateUser(id, { role: "admin" });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // If this is the currently logged in user, update their session
+      if (req.isAuthenticated() && req.user && req.user.id === id) {
+        req.login(updatedUser, (err) => {
+          if (err) {
+            console.error("Session update error:", err);
+            return res.status(500).json({ message: "Failed to update session" });
+          }
+          res.json({ message: "User set as admin and session updated", user: updatedUser });
+        });
+      } else {
+        res.json({ message: "User set as admin", user: updatedUser });
+      }
+    } catch (error) {
+      console.error("Set admin error:", error);
+      res.status(500).json({ message: "Failed to set user as admin" });
+    }
+  });
+  
   // Get all categories
   app.get("/api/categories", async (req, res) => {
     try {
@@ -295,41 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Set user role to admin (special endpoint for development/testing)
-  app.post("/api/users/:id/set-admin", async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      console.log("Setting user to admin, current user:", user);
-      
-      // Update user role to admin
-      const updatedUser = await storage.updateUser(userId, { role: "admin" });
-      if (!updatedUser) {
-        return res.status(500).json({ message: "Failed to update user role" });
-      }
-      
-      console.log("User after role update:", updatedUser);
-      
-      // Don't send back the password
-      const { password, ...userWithoutPassword } = updatedUser;
-      
-      res.json({
-        message: "User role updated to admin successfully",
-        user: userWithoutPassword
-      });
-    } catch (error) {
-      console.error("Set admin error:", error);
-      res.status(500).json({ message: "Failed to set user as admin" });
-    }
-  });
+  // Note: The set-admin endpoint is already defined above
   
   // Debug endpoint to get user by ID with role information
   app.get("/api/debug/user/:id", async (req, res) => {
