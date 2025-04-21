@@ -15,6 +15,7 @@ import CategoryProducts from "@/pages/CategoryProducts";
 import Checkout from "@/pages/Checkout";
 import Account from "@/pages/Account";
 import Orders from "@/pages/Orders";
+import OrderDetail from "@/pages/OrderDetail";
 import Wishlist from "@/pages/Wishlist";
 import AdminDashboard from "@/pages/AdminDashboard";
 import SellerDashboard from "@/pages/SellerDashboard";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
+      <Route path="/orders/:id" component={OrderDetail} />
       <Route path="/wishlist" component={Wishlist} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/seller" component={SellerDashboard} />
