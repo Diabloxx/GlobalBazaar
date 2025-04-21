@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { Express } from 'express';
+import { Express, Request, Response, NextFunction } from 'express';
 import session from 'express-session';
 import { storage } from './storage';
 import { User } from '@shared/schema';
@@ -9,7 +9,18 @@ import MemoryStore from 'memorystore';
 // Add type definition for Express User
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      username: string;
+      email: string;
+      role: string | null;
+      fullName: string | null;
+      address: string | null;
+      phone: string | null;
+      isVerifiedSeller: boolean | null;
+      salesCount: number | null;
+      createdAt: Date;
+    }
   }
 }
 
@@ -68,7 +79,7 @@ export function setupAuth(app: Express) {
 }
 
 // Middleware to check if user is authenticated
-export function isAuthenticated(req, res, next) {
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -76,7 +87,7 @@ export function isAuthenticated(req, res, next) {
 }
 
 // Middleware to check if user is a seller
-export function isSeller(req, res, next) {
+export function isSeller(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated() && (req.user.role === 'seller' || req.user.role === 'admin')) {
     return next();
   }
@@ -84,7 +95,7 @@ export function isSeller(req, res, next) {
 }
 
 // Middleware to check if user is an admin
-export function isAdmin(req, res, next) {
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated() && req.user.role === 'admin') {
     return next();
   }

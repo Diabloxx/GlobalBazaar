@@ -726,19 +726,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Seller application endpoint
-  app.post("/api/seller/apply", async (req, res) => {
+  app.post("/api/seller/apply", isAuthenticated, async (req, res) => {
     try {
-      const { userId, ...applicationData } = req.body;
-      
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
-      
-      // Get the user
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      const userId = req.user.id;
+      const applicationData = req.body;
       
       // Update the user with seller role
       const updatedUser = await storage.updateUser(userId, { role: "seller" });
@@ -762,16 +753,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seller API - Get seller's products
-  app.get("/api/seller/products", async (req, res) => {
+  app.get("/api/seller/products", isAuthenticated, isSeller, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to view your products" });
-      }
-
-      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
-      }
-
       // Get all products where sellerId matches the user's ID
       const products = await storage.getProducts();
       const sellerProducts = products.filter(product => product.sellerId === req.user.id);
@@ -784,16 +767,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seller API - Create a product
-  app.post("/api/seller/products", async (req, res) => {
+  app.post("/api/seller/products", isAuthenticated, isSeller, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to create a product" });
-      }
-
-      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
-      }
-
       const productData = insertProductSchema.parse(req.body);
       
       // Automatically set the seller ID to the current user
@@ -819,16 +794,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seller API - Update a product
-  app.patch("/api/seller/products/:id", async (req, res) => {
+  app.patch("/api/seller/products/:id", isAuthenticated, isSeller, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to update a product" });
-      }
-
-      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
-      }
-
       const productId = parseInt(req.params.id);
       if (isNaN(productId)) {
         return res.status(400).json({ message: "Invalid product ID" });
@@ -859,16 +826,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seller API - Delete a product
-  app.delete("/api/seller/products/:id", async (req, res) => {
+  app.delete("/api/seller/products/:id", isAuthenticated, isSeller, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to delete a product" });
-      }
-
-      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
-      }
-
       const productId = parseInt(req.params.id);
       if (isNaN(productId)) {
         return res.status(400).json({ message: "Invalid product ID" });
@@ -894,16 +853,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Seller API - Get seller's orders
-  app.get("/api/seller/orders", async (req, res) => {
+  app.get("/api/seller/orders", isAuthenticated, isSeller, async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to view your orders" });
-      }
-
-      if (req.user.role !== 'seller' && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "You must be a seller to access this endpoint" });
-      }
-
       // Get all orders (in a real application, we would filter by seller)
       // For now, just return all orders as a demonstration
       const allOrders = await storage.getAllOrders();
