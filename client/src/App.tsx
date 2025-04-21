@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { WelcomeProvider } from "./contexts/WelcomeContext";
 import { ThemeProvider } from "next-themes";
 
 import NotFound from "@/pages/not-found";
@@ -63,16 +64,18 @@ function App() {
           <AuthProvider>
             <CurrencyProvider>
               <CartProvider>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">
-                    <Router />
-                  </main>
-                  <Footer />
-                  <CartSidebar />
-                  <AssistantBubble />
-                  <Toaster />
-                </div>
+                <WelcomeProvider>
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main className="flex-grow">
+                      <Router />
+                    </main>
+                    <Footer />
+                    <CartSidebar />
+                    <AssistantBubble />
+                    <Toaster />
+                  </div>
+                </WelcomeProvider>
               </CartProvider>
             </CurrencyProvider>
           </AuthProvider>
