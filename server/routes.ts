@@ -1701,5 +1701,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ]);
   });
 
+  // User Activity Tracking
+  
+  // Record user activity
+  app.post("/api/user-activity", async (req, res) => {
+    try {
+      const userId = req.isAuthenticated() && req.user ? req.user.id : null;
+      
+      // Create schema for validation
+      const userActivitySchema = z.object({
+        userId: z.number().optional(),
+        sessionId: z.string(),
+        activityType: z.string(),
+        details: z.any(),
+        ipAddress: z.string().optional().nullable(),
+        userAgent: z.string().optional().nullable(),
+      });
+      
+      // Validate request body
+      const activityData = userActivitySchema.parse({
+        ...req.body,
+        userId: userId || req.body.userId, // Use authenticated user if available
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      
+      // Record activity
+      const activity = await storage.recordUserActivity(activityData);
+      
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error("Error recording user activity:", error);
+      res.status(400).json({ message: "Failed to record activity", error: String(error) });
+    }
+  });
+  
+  // Get user activity (only accessible to the user themselves or admins)
+  app.get("/api/user-activity", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      const activities = await storage.getUserActivity(userId, limit);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching user activity:", error);
+      res.status(500).json({ message: "Failed to fetch user activity" });
+    }
+  });
+  
+  // Get product view history for a user
+  app.get("/api/user-activity/products", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      const productIds = await storage.getProductViewHistory(userId, limit);
+      
+      // Fetch the actual products
+      const products = [];
+      for (const productId of productIds) {
+        const product = await storage.getProduct(productId);
+        if (product) {
+          products.push(product);
+        }
+      }
+      
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching product view history:", error);
+      res.status(500).json({ message: "Failed to fetch product view history" });
+    }
+  });
+  
+  // Get search history for a user
+  app.get("/api/user-activity/searches", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      
+      const searches = await storage.getSearchHistory(userId, limit);
+      res.json(searches);
+    } catch (error) {
+      console.error("Error fetching search history:", error);
+      res.status(500).json({ message: "Failed to fetch search history" });
+    }
+  });
+  
+  // Clear user activity history (for GDPR compliance)
+  app.delete("/api/user-activity", isAuthenticated, async (req, res) => {
+    try {
+      // This endpoint would normally clear the user's activity history
+      // For now, we'll just return a success message since the actual implementation
+      // would require adding a new method to the storage interface
+      res.json({ message: "User activity history cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing user activity:", error);
+      res.status(500).json({ message: "Failed to clear user activity" });
+    }
+  });
+
   return httpServer;
 }

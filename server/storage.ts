@@ -1245,6 +1245,94 @@ export class DatabaseStorage implements IStorage {
     ];
   }
   
+  // User Activity Tracking methods
+  async recordUserActivity(activity: InsertUserActivity): Promise<UserActivity> {
+    const [newActivity] = await db.insert(userActivity).values(activity).returning();
+    return newActivity;
+  }
+
+  async getUserActivity(userId: number, limit?: number): Promise<UserActivity[]> {
+    let query = db
+      .select()
+      .from(userActivity)
+      .where(eq(userActivity.userId, userId))
+      .orderBy(desc(userActivity.createdAt));
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    return query;
+  }
+  
+  async getProductViewHistory(userId: number, limit: number = 10): Promise<number[]> {
+    // Query all view_product activities
+    const activities = await db
+      .select()
+      .from(userActivity)
+      .where(
+        and(
+          eq(userActivity.userId, userId),
+          eq(userActivity.activityType, 'view_product')
+        )
+      )
+      .orderBy(desc(userActivity.createdAt));
+    
+    // Extract unique product IDs
+    const seen = new Set<number>();
+    const productIds: number[] = [];
+    
+    for (const activity of activities) {
+      const details = activity.details as any;
+      const productId = details.productId;
+      
+      if (productId && !seen.has(productId)) {
+        seen.add(productId);
+        productIds.push(productId);
+        
+        if (productIds.length >= limit) {
+          break;
+        }
+      }
+    }
+    
+    return productIds;
+  }
+  
+  async getSearchHistory(userId: number, limit: number = 10): Promise<string[]> {
+    // Query all search activities
+    const activities = await db
+      .select()
+      .from(userActivity)
+      .where(
+        and(
+          eq(userActivity.userId, userId),
+          eq(userActivity.activityType, 'search')
+        )
+      )
+      .orderBy(desc(userActivity.createdAt));
+    
+    // Extract unique search queries
+    const seen = new Set<string>();
+    const queries: string[] = [];
+    
+    for (const activity of activities) {
+      const details = activity.details as any;
+      const query = details.query;
+      
+      if (query && !seen.has(query)) {
+        seen.add(query);
+        queries.push(query);
+        
+        if (queries.length >= limit) {
+          break;
+        }
+      }
+    }
+    
+    return queries;
+  }
+  
   // Product Review operations
   async getProductReviews(productId: number): Promise<ProductReview[]> {
     return db.select().from(productReviews).where(eq(productReviews.productId, productId)).orderBy(desc(productReviews.createdAt));
