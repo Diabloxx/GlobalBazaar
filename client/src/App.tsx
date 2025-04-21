@@ -18,6 +18,8 @@ import Orders from "@/pages/Orders";
 import Wishlist from "@/pages/Wishlist";
 import AdminDashboard from "@/pages/AdminDashboard";
 import SellerDashboard from "@/pages/SellerDashboard";
+import CustomerService from "@/pages/CustomerService";
+import About from "@/pages/About";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
@@ -32,6 +34,13 @@ function Router() {
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
       <Route path="/wishlist" component={Wishlist} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/seller" component={SellerDashboard} />
+      <Route path="/sale" component={CategoryProducts} />
+      <Route path="/new-arrivals" component={CategoryProducts} />
+      <Route path="/bestsellers" component={CategoryProducts} />
+      <Route path="/customer-service" component={CustomerService} />
+      <Route path="/about" component={About} />
       <Route component={NotFound} />
     </Switch>
   );

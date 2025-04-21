@@ -42,24 +42,24 @@ const Footer = () => {
           <div>
             <h3 className="font-medium text-lg mb-4">Customer Service</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white">Contact Us</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">FAQs</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Shipping Policy</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Returns & Refunds</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Order Tracking</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Payment Methods</a></li>
+              <li><Link href="/customer-service#contact-us" className="text-gray-400 hover:text-white">Contact Us</Link></li>
+              <li><Link href="/customer-service#faqs" className="text-gray-400 hover:text-white">FAQs</Link></li>
+              <li><Link href="/customer-service#shipping" className="text-gray-400 hover:text-white">Shipping Policy</Link></li>
+              <li><Link href="/customer-service#returns" className="text-gray-400 hover:text-white">Returns & Refunds</Link></li>
+              <li><Link href="/customer-service#orders" className="text-gray-400 hover:text-white">Order Tracking</Link></li>
+              <li><Link href="/customer-service#payment" className="text-gray-400 hover:text-white">Payment Methods</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-medium text-lg mb-4">About Us</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white">About ShopEase</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Careers</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Terms & Conditions</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Affiliate Program</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
+              <li><Link href="/about#about" className="text-gray-400 hover:text-white">About ShopEase</Link></li>
+              <li><Link href="/about#careers" className="text-gray-400 hover:text-white">Careers</Link></li>
+              <li><Link href="/about#privacy" className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/about#terms" className="text-gray-400 hover:text-white">Terms & Conditions</Link></li>
+              <li><Link href="/about#affiliate" className="text-gray-400 hover:text-white">Affiliate Program</Link></li>
+              <li><Link href="/about#blog" className="text-gray-400 hover:text-white">Blog</Link></li>
             </ul>
           </div>
         </div>
