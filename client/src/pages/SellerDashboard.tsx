@@ -176,8 +176,14 @@ const SellerDashboard = () => {
   // Add product mutation
   const addProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues) => {
-      const res = await apiRequest('POST', '/api/seller/products', data);
-      return await res.json();
+      try {
+        const res = await apiRequest('POST', '/api/seller/products', data);
+        const jsonData = await res.json();
+        return jsonData;
+      } catch (error) {
+        console.error("Error adding product:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -200,9 +206,15 @@ const SellerDashboard = () => {
   // Update product mutation
   const updateProductMutation = useMutation({
     mutationFn: async (data: ProductFormValues & { id: number }) => {
-      const { id, ...rest } = data;
-      const res = await apiRequest('PATCH', `/api/seller/products/${id}`, rest);
-      return await res.json();
+      try {
+        const { id, ...rest } = data;
+        const res = await apiRequest('PATCH', `/api/seller/products/${id}`, rest);
+        const jsonData = await res.json();
+        return jsonData;
+      } catch (error) {
+        console.error("Error updating product:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -226,8 +238,13 @@ const SellerDashboard = () => {
   // Delete product mutation
   const deleteProductMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/seller/products/${id}`);
-      return id;
+      try {
+        await apiRequest('DELETE', `/api/seller/products/${id}`);
+        return id;
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        throw error;
+      }
     },
     onSuccess: (id) => {
       toast({
