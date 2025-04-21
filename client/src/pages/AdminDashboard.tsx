@@ -44,7 +44,8 @@ import {
   PlusCircle,
   Edit,
   Trash,
-  Search
+  Search,
+  UserCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { ProductForm } from '@/components/ProductForm';
@@ -403,6 +404,7 @@ const AdminDashboard = () => {
                         <TableHead>Image</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Category</TableHead>
+                        <TableHead>Seller</TableHead>
                         <TableHead>Price</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Action</TableHead>
@@ -424,6 +426,16 @@ const AdminDashboard = () => {
                           </TableCell>
                           <TableCell className="font-medium">{product.name}</TableCell>
                           <TableCell>{product.categoryId}</TableCell>
+                          <TableCell>
+                            {product.seller ? (
+                              <div className="flex items-center gap-2">
+                                <UserCircle className="h-4 w-4 text-muted-foreground" />
+                                {product.seller.username || product.seller.fullName || `ID: ${product.seller.id}`}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">No seller</span>
+                            )}
+                          </TableCell>
                           <TableCell>${product.price.toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge variant={product.inventory > 10 ? "success" : product.inventory > 0 ? "warning" : "destructive"}>

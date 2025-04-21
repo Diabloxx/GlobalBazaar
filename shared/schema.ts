@@ -39,6 +39,7 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   categoryId: integer("category_id").notNull(),
+  sellerId: integer("seller_id"),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
@@ -121,6 +122,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
     references: [categories.id]
+  }),
+  seller: one(users, {
+    fields: [products.sellerId],
+    references: [users.id]
   }),
   cartItems: many(cartItems),
   wishlistItems: many(wishlistItems)
