@@ -7,6 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const AdminTest = () => {
   const { user, updateProfile, login } = useAuth();
@@ -17,6 +26,10 @@ const AdminTest = () => {
   const [masterPasswordVerified, setMasterPasswordVerified] = useState(false);
   const [masterPasswordForm, setMasterPasswordForm] = useState({
     username: '',
+    masterPassword: ''
+  });
+  const [setPasswordForm, setSetPasswordForm] = useState({
+    userId: '',
     masterPassword: ''
   });
   const [loginForm, setLoginForm] = useState({
@@ -179,6 +192,76 @@ const AdminTest = () => {
     }));
   };
   
+  // Handle input changes for set password form
+  const handleSetPasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSetPasswordForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Set master password for a user (admin only)
+  const setMasterPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/admin-test/set-master-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: parseInt(setPasswordForm.userId),
+          masterPassword: setPasswordForm.masterPassword
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setDebugInfo('Master password set successfully');
+          toast({
+            title: "Success",
+            description: "Master password set successfully",
+          });
+          // Clear the form
+          setSetPasswordForm({
+            userId: '',
+            masterPassword: ''
+          });
+        } else {
+          setDebugInfo(`Failed to set master password: ${data.message}`);
+          toast({
+            title: "Failed",
+            description: data.message || "Failed to set master password",
+            variant: "destructive"
+          });
+        }
+      } else {
+        const error = await response.json();
+        setDebugInfo(`Failed to set master password: ${error.message}`);
+        toast({
+          title: "Error",
+          description: error.message || "Server error",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Master password setting failed:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Manual login submission
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,6 +348,10 @@ const AdminTest = () => {
   useEffect(() => {
     // Fetch user on initial load
     fetchUserFromServer();
+    
+    // Check if master password verification is stored in session
+    const verified = sessionStorage.getItem('admin_test_verified') === 'true';
+    setMasterPasswordVerified(verified);
   }, []);
 
   return (
@@ -297,7 +384,7 @@ const AdminTest = () => {
                     id="username"
                     name="username"
                     value={loginForm.username}
-                    onChange={handleInputChange}
+                    onChange={handleLoginInputChange}
                     placeholder="Enter your username"
                     required
                   />
@@ -312,7 +399,7 @@ const AdminTest = () => {
                     name="password"
                     type="password"
                     value={loginForm.password}
-                    onChange={handleInputChange}
+                    onChange={handleLoginInputChange}
                     placeholder="Enter your password"
                     required
                   />
@@ -394,7 +481,87 @@ const AdminTest = () => {
             </Button>
           )}
           
-          {user && (
+          {user && !masterPasswordVerified && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => {
+                    // Set username automatically if it's not already set
+                    if (!masterPasswordForm.username && user) {
+                      setMasterPasswordForm(prev => ({
+                        ...prev,
+                        username: user.username
+                      }));
+                    }
+                  }}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="text-yellow-500 border-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  Verify Master Password
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center">
+                    <Key className="mr-2 h-5 w-5 text-primary" />
+                    Master Password Verification
+                  </DialogTitle>
+                  <DialogDescription>
+                    Enter your master password to access admin testing functionality.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={verifyMasterPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="masterUsername" className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      Username
+                    </Label>
+                    <Input
+                      id="masterUsername"
+                      name="username"
+                      value={masterPasswordForm.username || (user?.username || '')}
+                      onChange={handleMasterPasswordInputChange}
+                      placeholder="Enter your username"
+                      required
+                      disabled={!!user}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="masterPassword" className="flex items-center">
+                      <Lock className="mr-2 h-4 w-4" />
+                      Master Password
+                    </Label>
+                    <Input
+                      id="masterPassword"
+                      name="masterPassword"
+                      type="password"
+                      value={masterPasswordForm.masterPassword}
+                      onChange={handleMasterPasswordInputChange}
+                      placeholder="Enter master password"
+                      required
+                    />
+                  </div>
+                  <DialogFooter className="mt-4">
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="w-full"
+                    >
+                      {isLoading ? (
+                        <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
+                      ) : (
+                        <><Shield className="mr-2 h-4 w-4" /> Verify Access</>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          
+          {user && masterPasswordVerified && (
             <>
               <Button 
                 onClick={getUserDebugInfo}
@@ -422,6 +589,75 @@ const AdminTest = () => {
                 <UserCog className="mr-2 h-4 w-4" />
                 Update Role (Direct)
               </Button>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    disabled={isLoading || user?.role !== 'admin'}
+                    variant="outline"
+                    className="text-green-500 border-green-500 hover:bg-green-50 dark:hover:bg-green-950"
+                  >
+                    <Key className="mr-2 h-4 w-4" />
+                    Set Master Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center">
+                      <Key className="mr-2 h-5 w-5 text-primary" />
+                      Set Master Password
+                    </DialogTitle>
+                    <DialogDescription>
+                      Grant admin testing access to a user by setting their master password.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={setMasterPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="userId" className="flex items-center">
+                        <User className="mr-2 h-4 w-4" />
+                        User ID
+                      </Label>
+                      <Input
+                        id="userId"
+                        name="userId"
+                        type="number"
+                        value={setPasswordForm.userId}
+                        onChange={handleSetPasswordInputChange}
+                        placeholder="Enter user ID"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newMasterPassword" className="flex items-center">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Master Password
+                      </Label>
+                      <Input
+                        id="newMasterPassword"
+                        name="masterPassword"
+                        type="password"
+                        value={setPasswordForm.masterPassword}
+                        onChange={handleSetPasswordInputChange}
+                        placeholder="Enter master password to set"
+                        required
+                      />
+                    </div>
+                    <DialogFooter className="mt-4">
+                      <Button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        {isLoading ? (
+                          <><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                        ) : (
+                          <><Shield className="mr-2 h-4 w-4" /> Set Password</>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </>
           )}
         </CardFooter>
