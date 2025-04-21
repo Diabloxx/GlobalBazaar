@@ -936,7 +936,20 @@ const SellerDashboard = () => {
                           <TableCell className="font-medium">#{order.id}</TableCell>
                           <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell>{order.userId}</TableCell>
-                          <TableCell>{JSON.parse(order.items).length} items</TableCell>
+                          <TableCell>
+                            {(() => {
+                              try {
+                                // Check if items is already an object or needs parsing
+                                const items = typeof order.items === 'string' 
+                                  ? JSON.parse(order.items) 
+                                  : order.items;
+                                return Array.isArray(items) ? `${items.length} items` : '0 items';
+                              } catch (error) {
+                                console.error(`Error parsing items for order ${order.id}:`, error);
+                                return '0 items';
+                              }
+                            })()}
+                          </TableCell>
                           <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
                           <TableCell>
                             <Badge 
