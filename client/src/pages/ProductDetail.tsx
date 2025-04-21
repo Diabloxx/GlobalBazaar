@@ -84,10 +84,41 @@ const ProductDetail = () => {
     },
   });
 
-  // Reset quantity when product changes
+  // Reset quantity when product changes and track browsing history
   useEffect(() => {
     setQuantity(1);
-  }, [slug]);
+    
+    // Track browsing history for recommendations
+    if (product && product.id) {
+      try {
+        // Get existing browsing history from localStorage
+        const storedHistory = localStorage.getItem('browsedProducts');
+        let browsedProducts: number[] = [];
+        
+        if (storedHistory) {
+          browsedProducts = JSON.parse(storedHistory);
+          // Ensure it's an array
+          if (!Array.isArray(browsedProducts)) {
+            browsedProducts = [];
+          }
+        }
+        
+        // Remove the current product if it exists already (to avoid duplicates)
+        browsedProducts = browsedProducts.filter(id => id !== product.id);
+        
+        // Add the current product to the beginning of the array
+        browsedProducts.unshift(product.id);
+        
+        // Limit history to last 10 products
+        browsedProducts = browsedProducts.slice(0, 10);
+        
+        // Save back to localStorage
+        localStorage.setItem('browsedProducts', JSON.stringify(browsedProducts));
+      } catch (error) {
+        console.error('Error updating browsing history:', error);
+      }
+    }
+  }, [product]);
 
   // Handle add to cart
   const handleAddToCart = () => {
