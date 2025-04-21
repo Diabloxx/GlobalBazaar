@@ -1986,6 +1986,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to clear user activity" });
     }
   });
+  
+  // AI-powered product recommendations
+  app.post("/api/ai/recommend", async (req, res) => {
+    try {
+      const { query, userPreferences, browsedProducts, categoryId, priceRange } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Query is required" });
+      }
+      
+      // Get current user ID if authenticated
+      const userId = req.isAuthenticated() ? req.user?.id : null;
+      
+      // If no browsed products provided, try to get from user history
+      let productIds = browsedProducts || [];
+      if (userId && (!productIds || productIds.length === 0)) {
+        productIds = await storage.getProductViewHistory(userId, 5);
+      }
+      
+      // Get all products for AI to analyze
+      const allProducts = await storage.getProducts();
+      
+      // Get AI recommendations
+      const aiResponse = await getProductRecommendations(
+        {
+          query,
+          userPreferences,
+          browsedProducts: productIds,
+          categoryId,
+          priceRange
+        },
+        allProducts
+      );
+      
+      // Get the actual product objects for the recommended IDs
+      const recommendedProducts = [];
+      for (const productId of aiResponse.recommendedProducts) {
+        const product = await storage.getProduct(productId);
+        if (product) {
+          recommendedProducts.push(product);
+        }
+      }
+      
+      // Record this as a user activity
+      if (userId) {
+        await storage.recordUserActivity({
+          userId,
+          sessionId: req.sessionID,
+          activityType: 'ai_recommendation',
+          details: { 
+            query,
+            recommendationCount: recommendedProducts.length
+          }
+        });
+      }
+      
+      res.json({
+        products: recommendedProducts,
+        message: aiResponse.message
+      });
+    } catch (error) {
+      console.error("AI recommendation error:", error);
+      res.status(500).json({ 
+        message: "Failed to get AI recommendations",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 
   return httpServer;
 }

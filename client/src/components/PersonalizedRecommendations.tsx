@@ -5,8 +5,9 @@ import { apiRequest } from "@/lib/queryClient";
 import ProductCard from "./ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Product } from "@shared/schema";
+import AIRecommendationWidget from "./products/AIRecommendationWidget";
 
 export function PersonalizedRecommendations() {
   const { user } = useAuth();
@@ -90,9 +91,19 @@ export function PersonalizedRecommendations() {
     return null;
   }
 
+  // Extract product IDs from view history for AI recommendations
+  const recentlyViewedProductIds = viewHistory ? 
+    viewHistory.map((product: Product) => product.id) : [];
+  
   return (
     <div className="w-full py-8">
       <div className="container px-4 mx-auto">
+        {/* AI Recommendation Widget */}
+        <AIRecommendationWidget 
+          recentlyViewedProducts={recentlyViewedProductIds}
+          categoryId={viewHistory && viewHistory.length > 0 ? viewHistory[0].categoryId : undefined}
+        />
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Recommended For You</h2>
           {hasRecommendations && (
