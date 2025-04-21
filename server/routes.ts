@@ -1520,6 +1520,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seller API - Update order status
+  app.patch("/api/seller/orders/:id/status", isAuthenticated, isSeller, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      const { status } = req.body;
+      if (!status || !['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      // Get the order
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Update the order status
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      console.error("Update order status error:", error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
   // Seller API - Get seller's orders
   app.get("/api/seller/orders", isAuthenticated, isSeller, async (req, res) => {
     try {
