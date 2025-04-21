@@ -7,6 +7,8 @@ import {
   wishlistItems, type WishlistItem, type InsertWishlistItem,
   Currency, currencySchema
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, like, and, or, desc } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -511,4 +513,266 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  // Category operations
+  async getCategories(): Promise<Category[]> {
+    return db.select().from(categories);
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async getCategoryBySlug(slug: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
+    return category;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  // Product operations
+  async getProducts(): Promise<Product[]> {
+    return db.select().from(products);
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async getProductBySlug(slug: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.slug, slug));
+    return product;
+  }
+
+  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.categoryId, categoryId));
+  }
+
+  async getFeaturedProducts(): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.featured, true));
+  }
+
+  async getSaleProducts(): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.isSale, true));
+  }
+
+  async getNewProducts(): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.isNew, true));
+  }
+
+  async getBestsellerProducts(): Promise<Product[]> {
+    return db.select().from(products).where(eq(products.isBestSeller, true));
+  }
+
+  async searchProducts(query: string): Promise<Product[]> {
+    const searchPattern = `%${query}%`;
+    return db
+      .select()
+      .from(products)
+      .where(
+        or(
+          like(products.name, searchPattern),
+          like(products.description, searchPattern)
+        )
+      );
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
+  }
+
+  // Cart operations
+  async getCartItems(userId: number): Promise<CartItem[]> {
+    return db.select().from(cartItems).where(eq(cartItems.userId, userId));
+  }
+
+  async getCartItemsWithProducts(userId: number): Promise<(CartItem & { product: Product })[]> {
+    const result = await db
+      .select({
+        cartItem: cartItems,
+        product: products
+      })
+      .from(cartItems)
+      .innerJoin(products, eq(cartItems.productId, products.id))
+      .where(eq(cartItems.userId, userId));
+
+    return result.map(({ cartItem, product }) => ({
+      ...cartItem,
+      product
+    }));
+  }
+
+  async getCartItem(id: number): Promise<CartItem | undefined> {
+    const [item] = await db.select().from(cartItems).where(eq(cartItems.id, id));
+    return item;
+  }
+
+  async getCartItemByUserAndProduct(userId: number, productId: number): Promise<CartItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(cartItems)
+      .where(
+        and(
+          eq(cartItems.userId, userId),
+          eq(cartItems.productId, productId)
+        )
+      );
+    return item;
+  }
+
+  async createCartItem(item: InsertCartItem): Promise<CartItem> {
+    const [newItem] = await db.insert(cartItems).values(item).returning();
+    return newItem;
+  }
+
+  async updateCartItem(id: number, itemData: Partial<InsertCartItem>): Promise<CartItem | undefined> {
+    const [updatedItem] = await db
+      .update(cartItems)
+      .set(itemData)
+      .where(eq(cartItems.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async deleteCartItem(id: number): Promise<boolean> {
+    const result = await db.delete(cartItems).where(eq(cartItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  async clearCart(userId: number): Promise<boolean> {
+    const result = await db.delete(cartItems).where(eq(cartItems.userId, userId));
+    return result.rowCount > 0;
+  }
+
+  // Order operations
+  async getOrders(userId: number): Promise<Order[]> {
+    return db
+      .select()
+      .from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    return newOrder;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
+  // Wishlist operations
+  async getWishlistItems(userId: number): Promise<WishlistItem[]> {
+    return db.select().from(wishlistItems).where(eq(wishlistItems.userId, userId));
+  }
+
+  async getWishlistItemsWithProducts(userId: number): Promise<(WishlistItem & { product: Product })[]> {
+    const result = await db
+      .select({
+        wishlistItem: wishlistItems,
+        product: products
+      })
+      .from(wishlistItems)
+      .innerJoin(products, eq(wishlistItems.productId, products.id))
+      .where(eq(wishlistItems.userId, userId));
+
+    return result.map(({ wishlistItem, product }) => ({
+      ...wishlistItem,
+      product
+    }));
+  }
+
+  async getWishlistItem(id: number): Promise<WishlistItem | undefined> {
+    const [item] = await db.select().from(wishlistItems).where(eq(wishlistItems.id, id));
+    return item;
+  }
+
+  async getWishlistItemByUserAndProduct(userId: number, productId: number): Promise<WishlistItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(wishlistItems)
+      .where(
+        and(
+          eq(wishlistItems.userId, userId),
+          eq(wishlistItems.productId, productId)
+        )
+      );
+    return item;
+  }
+
+  async createWishlistItem(item: InsertWishlistItem): Promise<WishlistItem> {
+    const [newItem] = await db.insert(wishlistItems).values(item).returning();
+    return newItem;
+  }
+
+  async deleteWishlistItem(id: number): Promise<boolean> {
+    const result = await db.delete(wishlistItems).where(eq(wishlistItems.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Currency operations
+  async getCurrencies(): Promise<Currency[]> {
+    // Currencies are not stored in the database, return the same hardcoded ones
+    return [
+      { code: "USD", name: "US Dollar", symbol: "$", rate: 1 },
+      { code: "EUR", name: "Euro", symbol: "€", rate: 0.93 },
+      { code: "GBP", name: "British Pound", symbol: "£", rate: 0.82 },
+      { code: "JPY", name: "Japanese Yen", symbol: "¥", rate: 151.2 },
+      { code: "CAD", name: "Canadian Dollar", symbol: "C$", rate: 1.38 },
+      { code: "AUD", name: "Australian Dollar", symbol: "A$", rate: 1.52 },
+      { code: "CNY", name: "Chinese Yuan", symbol: "¥", rate: 7.24 },
+      { code: "INR", name: "Indian Rupee", symbol: "₹", rate: 83.42 },
+    ];
+  }
+}
+
+export const storage = new DatabaseStorage();
