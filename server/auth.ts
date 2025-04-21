@@ -32,7 +32,11 @@ export function setupAuth(app: Express) {
   app.use(session({
     secret: 'shopease-secret-key',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to ensure session is always saved
+    cookie: {
+      secure: false, // Set to false for development, would be true in production with HTTPS
+      maxAge: 1000 * 60 * 60 * 24 // 24 hours
+    },
     store: new MemoryStoreSession({
       checkPeriod: 86400000 // Cleanup expired sessions once per day
     })

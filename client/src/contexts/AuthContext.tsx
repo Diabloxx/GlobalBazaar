@@ -46,7 +46,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const fetchCurrentUser = async () => {
       try {
         // Try to get current session from server first
-        const response = await fetch('/api/auth/user');
+        const response = await fetch('/api/auth/user', {
+          credentials: 'include' // Important for session cookies
+        });
+        
         if (response.ok) {
           const userData = await response.json();
           console.log("Fetched user from server:", userData);
@@ -54,22 +57,49 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           localStorage.setItem('user', JSON.stringify(userData));
           setIsLoading(false);
           return;
+        } else {
+          console.log("Not authenticated on server, status:", response.status);
+          
+          // Get user from localStorage
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            try {
+              // If we have a user in localStorage but no session, try to re-authenticate
+              const parsedUser = JSON.parse(storedUser);
+              console.log("Found user in localStorage:", parsedUser);
+              
+              // If we have stored credentials, try silent re-login (this is dev-only, not for production)
+              if (parsedUser.username && localStorage.getItem('_dev_password')) {
+                try {
+                  console.log("Attempting silent re-login...");
+                  const loginResult = await apiRequest('POST', '/api/auth/login', {
+                    username: parsedUser.username,
+                    password: localStorage.getItem('_dev_password')
+                  });
+                  
+                  if (loginResult.ok) {
+                    const refreshedUser = await loginResult.json();
+                    console.log("Silent re-login successful:", refreshedUser);
+                    setUser(refreshedUser);
+                    localStorage.setItem('user', JSON.stringify(refreshedUser));
+                    setIsLoading(false);
+                    return;
+                  }
+                } catch (loginError) {
+                  console.error("Silent re-login failed:", loginError);
+                }
+              }
+              
+              // Set user from localStorage if no re-auth was possible
+              setUser(parsedUser);
+            } catch (error) {
+              console.error('Failed to parse user from localStorage:', error);
+              localStorage.removeItem('user');
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching current user:', error);
-      }
-      
-      // Fall back to localStorage if server fetch fails
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          console.log("Using user from localStorage:", parsedUser);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error('Failed to parse user from localStorage:', error);
-          localStorage.removeItem('user');
-        }
       }
       
       setIsLoading(false);
@@ -86,6 +116,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log("Login successful, user data:", userData);
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Store password in localStorage for development silent re-auth
+      // NOTE: This is ONLY for development and would never be used in production
+      if (process.env.NODE_ENV === 'development') {
+        localStorage.setItem('_dev_password', password);
+      }
       
       toast({
         title: 'Login successful',
