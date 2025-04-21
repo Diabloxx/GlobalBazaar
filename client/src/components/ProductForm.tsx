@@ -50,6 +50,7 @@ const productSchema = z.object({
   isNew: z.boolean().default(false),
   isBestSeller: z.boolean().default(false),
   sellerId: z.number().nullable().optional(),
+  slug: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -93,6 +94,7 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
       isNew: product?.isNew || false,
       isBestSeller: product?.isBestSeller || false,
       sellerId: product?.sellerId || null,
+      slug: product?.slug,
     },
   });
 
@@ -112,6 +114,7 @@ export function ProductForm({ isOpen, onClose, product, isAdmin = false }: Produ
         isNew: product.isNew,
         isBestSeller: product.isBestSeller,
         sellerId: product.sellerId,
+        slug: product.slug,
       });
     }
   }, [form, product]);
