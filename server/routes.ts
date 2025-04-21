@@ -738,6 +738,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Product Review Endpoints
+  
+  // Get reviews for a product
+  app.get("/api/products/:id/reviews", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const reviews = await storage.getProductReviewsWithUser(productId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching product reviews:", error);
+      res.status(500).json({ message: "Failed to fetch product reviews" });
+    }
+  });
+  
+  // Get a specific review
+  app.get("/api/reviews/:id", async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      if (isNaN(reviewId)) {
+        return res.status(400).json({ message: "Invalid review ID" });
+      }
+      
+      const review = await storage.getProductReview(reviewId);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      res.json(review);
+    } catch (error) {
+      console.error("Error fetching review:", error);
+      res.status(500).json({ message: "Failed to fetch review" });
+    }
+  });
+  
+  // Get a user's review for a specific product
+  app.get("/api/users/:userId/products/:productId/review", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const productId = parseInt(req.params.productId);
+      
+      if (isNaN(userId) || isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid IDs provided" });
+      }
+      
+      // Check if the authenticated user matches the requested user ID
+      if (req.user.id !== userId) {
+        return res.status(403).json({ message: "Unauthorized to access this resource" });
+      }
+      
+      const review = await storage.getUserProductReview(userId, productId);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      res.json(review);
+    } catch (error) {
+      console.error("Error fetching user's product review:", error);
+      res.status(500).json({ message: "Failed to fetch user's product review" });
+    }
+  });
+  
+  // Add a new review for a product
+  app.post("/api/products/:id/reviews", isAuthenticated, async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      // Verify the product exists
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Verify user hasn't already reviewed this product
+      const existingReview = await storage.getUserProductReview(req.user.id, productId);
+      if (existingReview) {
+        return res.status(409).json({ 
+          message: "You have already reviewed this product", 
+          reviewId: existingReview.id 
+        });
+      }
+      
+      // Validate the review data
+      const reviewData = insertProductReviewSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        productId,
+        helpfulCount: 0,
+      });
+      
+      const newReview = await storage.createProductReview(reviewData);
+      res.status(201).json(newReview);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid review data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+  
+  // Update a review
+  app.put("/api/reviews/:id", isAuthenticated, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      if (isNaN(reviewId)) {
+        return res.status(400).json({ message: "Invalid review ID" });
+      }
+      
+      // Check if the review exists
+      const existingReview = await storage.getProductReview(reviewId);
+      if (!existingReview) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      // Check if the authenticated user is the owner of the review
+      if (existingReview.userId !== req.user.id) {
+        return res.status(403).json({ message: "Unauthorized to update this review" });
+      }
+      
+      // Validate the update data
+      const { rating, comment } = req.body;
+      const updateData: Partial<InsertProductReview> = {};
+      
+      if (rating !== undefined) updateData.rating = rating;
+      if (comment !== undefined) updateData.comment = comment;
+      
+      const updatedReview = await storage.updateProductReview(reviewId, updateData);
+      res.json(updatedReview);
+    } catch (error) {
+      console.error("Error updating review:", error);
+      res.status(500).json({ message: "Failed to update review" });
+    }
+  });
+  
+  // Delete a review
+  app.delete("/api/reviews/:id", isAuthenticated, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      if (isNaN(reviewId)) {
+        return res.status(400).json({ message: "Invalid review ID" });
+      }
+      
+      // Check if the review exists
+      const review = await storage.getProductReview(reviewId);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      // Check if the authenticated user is the owner of the review or an admin
+      if (review.userId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized to delete this review" });
+      }
+      
+      const success = await storage.deleteProductReview(reviewId);
+      if (!success) {
+        return res.status(500).json({ message: "Failed to delete review" });
+      }
+      
+      res.json({ message: "Review deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      res.status(500).json({ message: "Failed to delete review" });
+    }
+  });
+  
+  // Mark a review as helpful
+  app.post("/api/reviews/:id/helpful", isAuthenticated, async (req, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      if (isNaN(reviewId)) {
+        return res.status(400).json({ message: "Invalid review ID" });
+      }
+      
+      // Check if the review exists
+      const review = await storage.getProductReview(reviewId);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+      
+      // Increment the helpful count
+      const updatedReview = await storage.updateProductReview(reviewId, {
+        helpfulCount: (review.helpfulCount || 0) + 1
+      });
+      
+      res.json(updatedReview);
+    } catch (error) {
+      console.error("Error marking review as helpful:", error);
+      res.status(500).json({ message: "Failed to mark review as helpful" });
+    }
+  });
+  
   // Admin API - Get all users
   app.get("/api/admin/users", async (req, res) => {
     try {
