@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee } from "./stripe";
+import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee, stripe } from "./stripe";
 import { 
   insertUserSchema, 
   insertCartItemSchema,
