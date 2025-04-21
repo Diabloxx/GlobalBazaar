@@ -831,7 +831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: req.user.id,
         productId,
-        helpfulCount: 0,
+        helpful: 0,
       });
       
       const newReview = await storage.createProductReview(reviewData);
@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Increment the helpful count
       const updatedReview = await storage.updateProductReview(reviewId, {
-        helpfulCount: (review.helpfulCount || 0) + 1
+        helpful: (review.helpful || 0) + 1
       });
       
       res.json(updatedReview);

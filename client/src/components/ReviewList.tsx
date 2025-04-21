@@ -240,7 +240,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
                 onClick={() => handleMarkHelpful(review.id)}
               >
                 <ThumbsUp className="h-4 w-4" />
-                Helpful {review.helpfulCount > 0 && `(${review.helpfulCount})`}
+                Helpful {review.helpful > 0 && `(${review.helpful})`}
               </Button>
               
               {user?.id === review.userId && (
