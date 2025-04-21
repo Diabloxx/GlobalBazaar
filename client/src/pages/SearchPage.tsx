@@ -34,9 +34,9 @@ const SearchPage = () => {
     parseInt(searchParams.get('minPrice') || '0'),
     parseInt(searchParams.get('maxPrice') || '1000')
   ];
-  const initialCategoryIds = searchParams.get('categories')?.split(',').map(Number) || [];
-  const initialSortOrder = searchParams.get('sort') || 'relevance';
-  const initialRating = parseInt(searchParams.get('rating') || '0');
+  const initialCategoryIds = searchParams.get('categoryIds')?.split(',').map(Number) || [];
+  const initialSortOrder = searchParams.get('sortBy') || 'relevance';
+  const initialRating = parseInt(searchParams.get('minRating') || '0');
   
   // State for filters
   const [searchTerm, setSearchTerm] = useState(query);
@@ -63,9 +63,9 @@ const SearchPage = () => {
     if (searchTerm) params.append('q', searchTerm);
     if (priceRange[0] > 0) params.append('minPrice', priceRange[0].toString());
     if (priceRange[1] < 1000) params.append('maxPrice', priceRange[1].toString());
-    if (selectedCategories.length > 0) params.append('categories', selectedCategories.join(','));
-    if (sortOrder !== 'relevance') params.append('sort', sortOrder);
-    if (minRating > 0) params.append('rating', minRating.toString());
+    if (selectedCategories.length > 0) params.append('categoryIds', selectedCategories.join(','));
+    if (sortOrder !== 'relevance') params.append('sortBy', sortOrder);
+    if (minRating > 0) params.append('minRating', minRating.toString());
     return params.toString();
   };
   
