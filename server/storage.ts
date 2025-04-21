@@ -8,7 +8,7 @@ import {
   Currency, currencySchema
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, and, or, desc } from "drizzle-orm";
+import { eq, like, and, or, desc, inArray, ne } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -791,7 +791,7 @@ export class DatabaseStorage implements IStorage {
       // Reset all bestseller flags
       await db.update(products)
         .set({ isBestSeller: false })
-        .where(neq(products.id, -1)); // Update all products
+        .where(ne(products.id, -1)); // Update all products
       
       // Set bestseller flag for top selling products
       if (topSellingProductIds.length > 0) {

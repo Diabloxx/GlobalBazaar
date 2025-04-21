@@ -28,6 +28,11 @@ const Home = () => {
   const { data: featuredProducts = [], isLoading: featuredProductsLoading } = useQuery({
     queryKey: ['/api/products/featured'],
   });
+  
+  // Fetch bestseller products
+  const { data: bestsellerProducts = [], isLoading: bestsellerProductsLoading } = useQuery({
+    queryKey: ['/api/products/bestsellers'],
+  });
 
   // Fetch sale products for flash sale
   const { data: saleProducts = [], isLoading: saleProductsLoading } = useQuery({
@@ -221,6 +226,49 @@ const Home = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bestsellers - Automatically Updated Based on Sales */}
+      <section className="py-8 bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="font-bold text-2xl text-gray-800 dark:text-white">Most Popular Items</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Automatically updated based on customer choices</p>
+            </div>
+            <div className="flex space-x-2">
+              <button className="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary bg-white dark:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button className="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary bg-white dark:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {bestsellerProductsLoading ? (
+              <ProductCardSkeletonGrid count={10} />
+            ) : (
+              bestsellerProducts.map((product: Product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
+          </div>
+          
+          <div className="mt-8 text-center">
+            <Link 
+              href="/products?sort=popular" 
+              className="inline-block border-2 border-primary text-primary dark:text-primary hover:bg-primary hover:text-white font-medium px-6 py-2 rounded-full transition-colors"
+            >
+              View All Popular Items
+            </Link>
           </div>
         </div>
       </section>
