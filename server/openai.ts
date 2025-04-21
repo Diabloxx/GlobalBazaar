@@ -3,8 +3,8 @@ import OpenAI from "openai";
 // Initialize the OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const DEFAULT_MODEL = "gpt-4o";
+// Using a model that has free tier access instead of gpt-4o
+const DEFAULT_MODEL = "gpt-3.5-turbo";
 
 type ProductRecommendationParams = {
   query: string;
@@ -195,14 +195,13 @@ export async function analyzeUserInterests(userMessage: string) {
       messages: [
         {
           role: "system",
-          content: "Extract key shopping interests, preferences, price range, and any specific product categories from the following user message. Respond with a JSON object with keys: interests (array of strings), priceRange (object with min and max if mentioned), and categories (array of strings).",
+          content: "Extract key shopping interests, preferences, price range, and any specific product categories from the following user message. Respond with a JSON object with keys: interests (array of strings), priceRange (object with min and max if mentioned), and categories (array of strings). Make sure your response is valid JSON only.",
         },
         {
           role: "user",
           content: userMessage,
         }
       ],
-      response_format: { type: "json_object" },
       temperature: 0.3,
       max_tokens: 300, // Limit token usage
     });
@@ -212,7 +211,19 @@ export async function analyzeUserInterests(userMessage: string) {
       return { interests: [], priceRange: null, categories: [] };
     }
 
-    return JSON.parse(content);
+    try {
+      // Try to extract JSON from the response content
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      } else {
+        console.log("No JSON found in OpenAI response, using fallback");
+        return getBasicInterests(userMessage);
+      }
+    } catch (parseError) {
+      console.error("Error parsing JSON response:", parseError);
+      return getBasicInterests(userMessage);
+    }
   } catch (error) {
     console.error("Error analyzing user interests:", error);
     // Return basic interests extracted from text when OpenAI fails
