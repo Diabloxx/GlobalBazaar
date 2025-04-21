@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept a variety of payment methods including credit cards (Visa, Mastercard, American Express), PayPal, and Apple Pay. All payments are processed securely through our encrypted payment gateway."
+    answer: "We accept a variety of payment methods including credit cards (Visa, Mastercard, American Express), Stripe, and Apple Pay. All payments are processed securely through our encrypted payment gateway."
   },
   {
     question: "How long does shipping take?",
@@ -108,7 +108,7 @@ const paymentContent = (
     <h3 className="text-lg font-medium mt-4">Accepted Payment Methods</h3>
     <ul className="list-disc pl-5 space-y-2">
       <li><strong>Credit/Debit Cards:</strong> We accept Visa, Mastercard, American Express, and Discover</li>
-      <li><strong>PayPal:</strong> Fast and secure checkout with PayPal protection</li>
+      <li><strong>Stripe:</strong> Fast and secure checkout with Stripe protection</li>
       <li><strong>Apple Pay:</strong> Quick checkout for Apple device users</li>
       <li><strong>Google Pay:</strong> Convenient mobile payment option</li>
       <li><strong>Shop Pay:</strong> Save your information for faster checkout</li>

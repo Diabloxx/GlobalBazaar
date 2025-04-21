@@ -171,8 +171,8 @@ const CartSidebar = () => {
             </Button>
             <div className="mt-4 flex justify-center space-x-2">
               <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-                alt="PayPal" 
+                src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
+                alt="Stripe" 
                 className="h-8"
               />
               <img 

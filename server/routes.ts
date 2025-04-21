@@ -12,10 +12,17 @@ import { z } from "zod";
 import passport from "passport";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
 import bcrypt from "bcryptjs";
+import { WebSocketServer } from "ws";
+import Stripe from "stripe";
+import { getOrCreateStripeCustomer, createPaymentIntent, processPayout, calculatePlatformFee } from "./stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
+  
+  // Initialize WebSocket server
+  const httpServer = createServer(app);
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   // All API routes will be prefixed with /api
   
@@ -1094,6 +1101,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
   return httpServer;
 }

@@ -75,8 +75,8 @@ const Footer = () => {
               <span className="text-gray-400 text-sm mr-4">We Accept:</span>
               <div className="flex space-x-2">
                 <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-                  alt="PayPal" 
+                  src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
+                  alt="Stripe" 
                   className="h-8 bg-white rounded px-2"
                 />
                 <img 

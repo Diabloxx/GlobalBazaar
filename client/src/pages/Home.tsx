@@ -296,7 +296,7 @@ const Home = () => {
             <FeatureCard 
               icon={<Shield className="h-5 w-5" />}
               title="Secure Payments"
-              description="Protected by PayPal"
+              description="Protected by Stripe"
               bgColor="bg-amber-400/10"
               textColor="text-amber-500"
             />
