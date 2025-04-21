@@ -1074,24 +1074,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin API - Get all orders
-  app.get("/api/admin/orders", async (req, res) => {
+  app.get("/api/admin/orders", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      // In a production app, we would check if the requester is an admin here
-      
       // Get all orders
       const orders = await storage.getAllOrders();
-      res.json(orders);
+      res.jsonSafe(orders);
     } catch (error) {
       console.error("Admin get orders error:", error);
-      res.status(500).json({ message: "Failed to fetch orders" });
+      res.status(500).jsonSafe({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  // Admin API - Update order status
+  app.patch("/api/admin/orders/:id/status", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      const { status } = req.body;
+      if (!status || !['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'paid'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      // Get the order
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Update the order status
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      res.status(200).jsonSafe(updatedOrder);
+    } catch (error) {
+      console.error("Admin update order status error:", error);
+      res.status(500).jsonSafe({ message: "Failed to update order status" });
     }
   });
   
   // Admin API - Get all products with seller information
-  app.get("/api/admin/products", async (req, res) => {
+  app.get("/api/admin/products", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      // In a production app, we would check if the requester is an admin here
-      
       // Get all products
       const products = await storage.getProducts();
       
@@ -1119,10 +1143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      res.json(productsWithSellerInfo);
+      res.jsonSafe(productsWithSellerInfo);
     } catch (error) {
       console.error("Admin get products error:", error);
-      res.status(500).json({ message: "Failed to fetch products" });
+      res.status(500).jsonSafe({ message: "Failed to fetch products" });
     }
   });
   
