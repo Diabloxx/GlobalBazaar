@@ -44,11 +44,20 @@ import {
 
 export default function SellerTutorial() {
   const { user } = useAuth();
-  
-  // TutorialProvider is temporarily disabled to fix hook error
-  // Using static data instead
-  const isLoading = false;
-  const error = null;
+  const {
+    steps,
+    progress,
+    activeStepId,
+    isLoading,
+    error,
+    filterByCategory,
+    selectedCategory,
+    setSelectedCategory,
+    categories,
+    setActiveStepId,
+    completeTutorialStep,
+    resetTutorialProgress,
+  } = useTutorial();
   
   const [notes, setNotes] = useState('');
   const [isCompleting, setIsCompleting] = useState(false);
@@ -83,56 +92,52 @@ export default function SellerTutorial() {
     );
   }
 
-  // Create mock data for temporary use while TutorialProvider is disabled
-  const [activeStepId, setActiveStepId] = useState(1);
-  
-  // Placeholder mock data
-  const steps = [
-    {
-      id: 1,
-      title: "Getting Started",
-      description: "Learn the basics of selling on our platform",
-      order: 1,
-      category: "Basics",
-      content: "<p>Welcome to our seller program! This tutorial will guide you through everything you need to know.</p><p>TutorialProvider is temporarily disabled for debugging. This is placeholder content.</p>",
-      imageUrl: null,
-      videoUrl: null,
-      estimatedTimeMinutes: 5,
-      prerequisites: null,
-      createdAt: new Date()
-    }
-  ];
-  
-  const progress = [];
-  const completedSteps = 0;
+  // Calculate completion percentage
+  const completedSteps = progress.filter(p => p.isCompleted).length;
   const totalSteps = steps.length;
-  const completionPercentage = 0;
-  const categories = ["Basics"];
-  const selectedCategory = null;
-  
+  const completionPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
+
   // Get the active step
-  const activeStep = steps[0];
+  const activeStep = steps.find(step => step.id === activeStepId);
   
   // Get the progress for the active step
-  const activeStepProgress = null;
+  const activeStepProgress = progress.find(p => p.stepId === activeStepId);
 
-  // Placeholder functions
+  // Handle step completion
   const handleCompleteStep = async () => {
-    setIsCompleting(true);
-    setTimeout(() => {
-      setIsCompleting(false);
-    }, 1000);
+    if (activeStepId) {
+      setIsCompleting(true);
+      try {
+        await completeTutorialStep(activeStepId, notes);
+        setNotes('');
+        
+        // Find the next uncompleted step
+        const uncompleteSteps = steps.filter(step => 
+          !progress.some(p => p.stepId === step.id && p.isCompleted)
+        );
+        
+        if (uncompleteSteps.length > 0) {
+          setActiveStepId(uncompleteSteps[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to complete step:', error);
+      } finally {
+        setIsCompleting(false);
+      }
+    }
   };
 
   // Handle reset progress
   const handleResetProgress = async () => {
     setIsResetting(true);
-    setTimeout(() => {
+    try {
+      await resetTutorialProgress();
+    } catch (error) {
+      console.error('Failed to reset progress:', error);
+    } finally {
       setIsResetting(false);
-    }, 1000);
+    }
   };
-  
-  const filterByCategory = () => {};
 
   return (
     <div className="container mx-auto px-4 py-8">

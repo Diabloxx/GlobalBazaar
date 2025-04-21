@@ -47,7 +47,22 @@ interface TutorialContextType {
 }
 
 // Create context with default values
-const TutorialContext = createContext<TutorialContextType | null>(null);
+const defaultContextValue: TutorialContextType = {
+  steps: [],
+  progress: [],
+  activeStepId: null,
+  isLoading: false,
+  error: null,
+  filterByCategory: () => {},
+  selectedCategory: null,
+  setSelectedCategory: () => {},
+  categories: [],
+  setActiveStepId: () => {},
+  completeTutorialStep: async () => {},
+  resetTutorialProgress: async () => {},
+};
+
+const TutorialContext = createContext<TutorialContextType>(defaultContextValue);
 
 // Tutorial provider props
 interface TutorialProviderProps {
@@ -236,8 +251,5 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 // Hook for using tutorial context
 export function useTutorial() {
   const context = useContext(TutorialContext);
-  if (!context) {
-    throw new Error('useTutorial must be used within a TutorialProvider');
-  }
   return context;
 }

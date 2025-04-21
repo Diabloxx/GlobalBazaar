@@ -68,17 +68,18 @@ function App() {
             <CurrencyProvider>
               <CartProvider>
                 <WelcomeProvider>
-                  {/* Temporarily disabled TutorialProvider to fix the hook error */}
-                  <div className="flex flex-col min-h-screen">
-                    <Header />
-                    <main className="flex-grow">
-                      <Router />
-                    </main>
-                    <Footer />
-                    <CartSidebar />
-                    <AssistantBubble />
-                    <Toaster />
-                  </div>
+                  <TutorialProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Header />
+                      <main className="flex-grow">
+                        <Router />
+                      </main>
+                      <Footer />
+                      <CartSidebar />
+                      <AssistantBubble />
+                      <Toaster />
+                    </div>
+                  </TutorialProvider>
                 </WelcomeProvider>
               </CartProvider>
             </CurrencyProvider>
