@@ -10,6 +10,7 @@ import CategoryCard from '@/components/CategoryCard';
 import FlashSaleCard from '@/components/FlashSaleCard';
 import FeatureCard from '@/components/FeatureCard';
 import { ProductCardSkeletonGrid } from '@/components/ProductCardSkeleton';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 
 const Home = () => {
   // State for flash sale countdown
@@ -218,6 +219,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+      
+      {/* Personalized Recommendations (if user is logged in) */}
+      <PersonalizedRecommendations />
 
       {/* Bestsellers - Automatically Updated Based on Sales */}
       <section className="py-8 bg-white dark:bg-gray-900">
