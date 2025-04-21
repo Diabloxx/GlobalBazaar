@@ -163,7 +163,7 @@ const CustomerService = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-3xl font-bold">Customer Service</h1>
         <p className="text-gray-600 mt-2">
           We're here to help! Find answers to your questions or contact our support team.
@@ -171,14 +171,16 @@ const CustomerService = () => {
       </div>
       
       <Tabs defaultValue={hash} className="space-y-8">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
-          <TabsTrigger value="contact-us">Contact Us</TabsTrigger>
-          <TabsTrigger value="faqs">FAQs</TabsTrigger>
-          <TabsTrigger value="shipping">Shipping</TabsTrigger>
-          <TabsTrigger value="returns">Returns</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
-          <TabsTrigger value="orders">Order Tracking</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
+            <TabsTrigger value="contact-us">Contact Us</TabsTrigger>
+            <TabsTrigger value="faqs">FAQs</TabsTrigger>
+            <TabsTrigger value="shipping">Shipping</TabsTrigger>
+            <TabsTrigger value="returns">Returns</TabsTrigger>
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+            <TabsTrigger value="orders">Order Tracking</TabsTrigger>
+          </TabsList>
+        </div>
         
         {/* Contact Us */}
         <TabsContent value="contact-us">

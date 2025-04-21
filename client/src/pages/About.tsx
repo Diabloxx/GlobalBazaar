@@ -78,15 +78,22 @@ const About = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-6">
+        <h1 className="text-3xl font-bold">About Us</h1>
+        <p className="text-gray-600 mt-2">Learn more about ShopEase, our mission, and our team</p>
+      </div>
+      
       <Tabs defaultValue={hash} className="space-y-8">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
-          <TabsTrigger value="about">About ShopEase</TabsTrigger>
-          <TabsTrigger value="careers">Careers</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
-          <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
-          <TabsTrigger value="affiliate">Affiliate Program</TabsTrigger>
-          <TabsTrigger value="blog">Blog</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-4xl">
+            <TabsTrigger value="about">About ShopEase</TabsTrigger>
+            <TabsTrigger value="careers">Careers</TabsTrigger>
+            <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
+            <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+            <TabsTrigger value="affiliate">Affiliate Program</TabsTrigger>
+            <TabsTrigger value="blog">Blog</TabsTrigger>
+          </TabsList>
+        </div>
         
         {/* About ShopEase */}
         <TabsContent value="about">
