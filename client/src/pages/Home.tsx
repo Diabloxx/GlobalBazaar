@@ -96,7 +96,7 @@ const Home = () => {
                 <Button 
                   asChild
                   variant="outline"
-                  className="bg-white border border-gray-300 hover:border-primary text-gray-700 hover:text-primary font-medium py-3 px-6 rounded-full"
+                  className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-700 dark:text-gray-200 hover:text-primary dark:hover:text-primary font-medium py-3 px-6 rounded-full"
                 >
                   <Link href="/category/sale">
                     Daily Deals
@@ -267,13 +267,13 @@ const Home = () => {
       {/* App Download Banner */}
       <section className="py-8 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
-          <div className="bg-gray-100 rounded-xl overflow-hidden">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
             <div className="flex flex-col md:flex-row">
               <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                <h2 className="font-bold text-2xl md:text-3xl text-gray-800 mb-4">
+                <h2 className="font-bold text-2xl md:text-3xl text-gray-800 dark:text-white mb-4">
                   Download Our App
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
                   Get exclusive app-only deals and shop on the go with our mobile app. Scan the QR code to download now!
                 </p>
                 <div className="flex flex-wrap gap-4">
@@ -310,20 +310,20 @@ const Home = () => {
       </section>
 
       {/* Newsletter */}
-      <section className="py-12 bg-gray-50">
+      <section className="py-12 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
           <div className="max-w-xl mx-auto text-center">
-            <h2 className="font-bold text-2xl text-gray-800 mb-4">
+            <h2 className="font-bold text-2xl text-gray-800 dark:text-white mb-4">
               Subscribe to Our Newsletter
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Get the latest updates on new products and upcoming sales.
             </p>
             <form className="flex flex-col sm:flex-row gap-2">
               <input 
                 type="email" 
                 placeholder="Your email address" 
-                className="flex-grow px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-primary"
+                className="flex-grow px-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:outline-none focus:border-primary"
               />
               <Button 
                 type="submit" 
