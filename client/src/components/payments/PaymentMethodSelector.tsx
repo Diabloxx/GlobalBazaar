@@ -138,7 +138,7 @@ export default function PaymentMethodSelector({
                 Complete your purchase with Google Pay.
               </p>
               <button 
-                className="bg-white border border-gray-300 px-6 py-3 rounded-md 
+                className="bg-background border border-input px-6 py-3 rounded-md 
                            flex items-center justify-center mx-auto shadow-sm"
                 onClick={() => {
                   // In a real app, replace with actual Google Pay logic
