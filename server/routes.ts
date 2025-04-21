@@ -165,6 +165,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get sort order
       const sortBy = req.query.sortBy as string || undefined;
       
+      // Get limit parameter (for search suggestions)
+      let limit: number | undefined = undefined;
+      if (req.query.limit) {
+        limit = parseInt(req.query.limit as string, 10);
+      }
+      
       // Apply all filters to search
       const products = await storage.searchProducts(query, {
         minPrice,
@@ -174,7 +180,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         minRating
       });
       
-      res.json(products);
+      // If limit is specified, return only that many results
+      const limitedResults = limit ? products.slice(0, limit) : products;
+      
+      res.json(limitedResults);
     } catch (error) {
       console.error("Search error:", error);
       res.status(500).json({ message: "Failed to search products" });
