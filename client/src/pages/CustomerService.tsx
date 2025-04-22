@@ -49,7 +49,7 @@ const faqs = [
 // Shipping policy content
 const shippingContent = (
   <div className="space-y-4">
-    <p>At ShopEase, we aim to provide fast and reliable shipping for all orders. Our shipping policy is designed to ensure your satisfaction with every purchase.</p>
+    <p>At TechBazaar, we aim to provide fast and reliable shipping for all orders. Our shipping policy is designed to ensure your satisfaction with every purchase.</p>
     
     <h3 className="text-lg font-medium mt-4">Shipping Methods and Timeframes</h3>
     <ul className="list-disc pl-5 space-y-2">
@@ -103,7 +103,7 @@ const returnsContent = (
 // Payment methods content
 const paymentContent = (
   <div className="space-y-4">
-    <p>ShopEase offers a variety of secure payment options to make your shopping experience convenient and safe.</p>
+    <p>TechBazaar offers a variety of secure payment options to make your shopping experience convenient and safe.</p>
     
     <h3 className="text-lg font-medium mt-4">Accepted Payment Methods</h3>
     <ul className="list-disc pl-5 space-y-2">

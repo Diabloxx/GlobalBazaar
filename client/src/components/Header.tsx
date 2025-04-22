@@ -125,7 +125,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex-shrink-0 mr-0 md:mr-8">
             <Link href="/" className="flex items-center">
-              <span className="font-bold text-2xl text-primary">ShopEase</span>
+              <span className="font-bold text-2xl text-primary">TechBazaar</span>
             </Link>
           </div>
           
