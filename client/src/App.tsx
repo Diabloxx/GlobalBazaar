@@ -66,26 +66,29 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system">
         <TooltipProvider>
-          <AuthProvider>
-            <CurrencyProvider>
-              <CartProvider>
-                <WelcomeProvider>
-                  <TutorialProvider>
-                    <div className="flex flex-col min-h-screen">
-                      <Header />
-                      <main className="flex-grow">
-                        <Router />
-                      </main>
-                      <Footer />
-                      <CartSidebar />
-                      <AssistantBubble />
-                      <Toaster />
-                    </div>
-                  </TutorialProvider>
-                </WelcomeProvider>
-              </CartProvider>
-            </CurrencyProvider>
-          </AuthProvider>
+          <CookieConsentProvider>
+            <AuthProvider>
+              <CurrencyProvider>
+                <CartProvider>
+                  <WelcomeProvider>
+                    <TutorialProvider>
+                      <div className="flex flex-col min-h-screen">
+                        <Header />
+                        <main className="flex-grow">
+                          <Router />
+                        </main>
+                        <Footer />
+                        <CartSidebar />
+                        <AssistantBubble />
+                        <LiveChatWidget agentName="Sarah" />
+                        <Toaster />
+                      </div>
+                    </TutorialProvider>
+                  </WelcomeProvider>
+                </CartProvider>
+              </CurrencyProvider>
+            </AuthProvider>
+          </CookieConsentProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
