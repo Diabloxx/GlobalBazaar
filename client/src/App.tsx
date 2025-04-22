@@ -8,6 +8,8 @@ import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WelcomeProvider } from "./contexts/WelcomeContext";
 import { TutorialProvider } from "./contexts/TutorialContext";
+import { CookieConsentProvider } from "./contexts/CookieConsentContext";
+import { LiveChatWidget } from "./components/LiveChat";
 import { ThemeProvider } from "next-themes";
 
 import NotFound from "@/pages/not-found";
