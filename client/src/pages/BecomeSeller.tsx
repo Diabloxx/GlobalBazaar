@@ -201,7 +201,7 @@ const BecomeSeller = () => {
             </div>
             <CardTitle>Application Submitted!</CardTitle>
             <CardDescription>
-              Thank you for applying to become a seller on ShopEase. We've received your application and will review it shortly.
+              Thank you for applying to become a seller on TechBazaar. We've received your application and will review it shortly.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
@@ -220,7 +220,7 @@ const BecomeSeller = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-4">Become a Seller on ShopEase</h1>
+        <h1 className="text-4xl font-bold mb-4">Become a Seller on TechBazaar</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
           Join thousands of successful businesses selling on our platform. Reach millions of customers and grow your business with our powerful seller tools.
         </p>
@@ -228,7 +228,7 @@ const BecomeSeller = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
         <div>
-          <h2 className="text-2xl font-bold mb-6">Why Sell on ShopEase?</h2>
+          <h2 className="text-2xl font-bold mb-6">Why Sell on TechBazaar?</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {sellerBenefits.map((benefit, index) => (
@@ -402,7 +402,7 @@ const BecomeSeller = () => {
       <div className="bg-gray-50 p-8 rounded-lg mb-12">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold mb-2">How It Works</h2>
-          <p className="text-gray-600">Our straightforward process to becoming a seller on ShopEase</p>
+          <p className="text-gray-600">Our straightforward process to becoming a seller on TechBazaar</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -206,7 +206,7 @@ const CustomerService = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-500">Available 24/7</p>
-                  <p className="font-medium">1-800-SHOPEASE</p>
+                  <p className="font-medium">1-800-TECHBAZAAR</p>
                 </CardContent>
               </Card>
               
@@ -218,7 +218,7 @@ const CustomerService = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-500">We respond within 24 hours</p>
-                  <p className="font-medium">support@shopease.com</p>
+                  <p className="font-medium">support@techbazaar.com</p>
                 </CardContent>
               </Card>
               

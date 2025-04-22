@@ -292,7 +292,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       toast({
         title: 'Registration successful',
-        description: `Welcome to ShopEase, ${newUser.username}!`,
+        description: `Welcome to TechBazaar, ${newUser.username}!`,
       });
       
       // Invalidate any cached queries that might depend on auth state
